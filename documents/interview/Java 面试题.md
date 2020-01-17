@@ -241,6 +241,128 @@
 
 ------
 
+#### JVM 
+
+1. JVM 组成:
+
+    - 类加载器 (ClassLoader): 负责类的加载
+    - 运行时数据区 (Runtime Data Area): 负责 Java 程序内存管理
+    - 执行引擎 (Execution Engine): 负责将字节码翻译为底层指令
+    - 本地库接口 (Native Interface): 负责调用其它语言的的接口
+
+2. JVM 运行时数据区:
+
+    - 程序计数器 (Program Counter Register): 当前线程所执行的字节码的行号指示器, 线程私有.
+    - Java 虚拟机栈 (Java Virtual Machine Stacks):  每个方法在执行的时候都会创建一个栈帧 (Stack Frame) 用于存储局部变量表, 操作数栈, 动态链接, 方法出口等信息. 每一个方法从调用直到执行完毕, 就对应着一个栈帧在虚拟机栈中入栈到出栈的过程, 线程私有.
+    - 本地方法栈 (Native Method Stacks): 与 Java 虚拟机栈类似, 服务于虚拟机使用的 Native 方法.
+    - Java 堆 (Java Heap): 存放创建的对象实例, 线程共享, 在虚拟机启动时创建.
+    - 方法区 (Method Area): 存储被虚拟机加载的类信息, 常量, 静态变量, 及时编译器编译后的代码等数据, 线程共享.
+    - 运行时常量池 (Runtime Constant Pool): 该区域属于方法区的一部分. Class 文件中的常量池 (Constant Pool Table) 在类加载后就会进入方法区的运行时常量池中存放.
+
+3. 堆和栈的区别:
+
+    - 功能方面: 堆是用来存放对象的, 栈是用来执行程序的.
+    - 共享性: 堆是线程共享的, 栈是线程私有的.
+    - 空间大小: 堆大小远远大于栈.
+
+4. 双亲委派模型:
+
+    对于任意一个类, 都需要由加载它的类加载器和这个类本身一同确立在 JVM 中的唯一性. 类加载分类:
+
+    - 根类加载器 (Bootstrap ClassLoader), 是虚拟机自身的一部分, 用来加载 `JAVA_HOME/jre/lib` 目录中的或者被 `-Xbootclasspath` 参数所指定路径中并且能够被虚拟机识别的类库.
+    - 扩展类加载器 (Extension ClassLoader)： 负责加载 `JAVA_HOME/jre/lib/ext` 或者由 `java.ext.dirs` 系统变量指定的路径中的所有类库.
+    - 系统类加载器 (System Classloader): 负责加载 Java 命令的 `-classpath` 选项, `java.class.path` 系统属性, 或者 `CLASSPATH` 环境变量所指定的类库.
+
+    如果一个类加载器受到了类加载的请求, 它首先不会主动去加载这个类, 而是把这个请求委派给父类加载器去完成, 每一层的类加载其都是如此, 只有当父加载无法完成加载请求时, 子加载器才会尝试去加载类.
+
+5. 类加载过程:
+
+    - 加载:  根据类的全限定名获取类的二进制流, 将这个二进制流代表的静态存储结构转化为方法区的运行时数据结构, 然后生成一个 `Class` 类的对象 (对于 HotSpot 虚拟机而言, 该对象存在于方法区).
+    - 验证：检查加载的 Class 文件的正确性.
+    - 准备:  为类变量的分配内存并设置类变量最初始值(在方法区分配变量).
+    - 解析: 将常量池重的符号引用替换为直接引用的过程. 符号引用就是一个标识字符串, 直接引用相当于内存的地址.
+    - 初始化: 对静态变量和静态代码初始块执行初始化工作.
+
+6. 如何判断对象是否可以被回收:
+
+    - 引用计数器: 为每个对象创建一个引用计数, 有对象时计数器加 1, 引用被释放时计数减 1, 当计数器为 0 时就可以被回收. 缺点是无法解决循环引用的问题. 
+    - 可达性分析: 从 GC Roots 开始向下搜索, 搜索走过的路径称为引用链. 当一个对象到 GC Roots 没有任何引用链相连时, 则证明此对象是可以被回收的.
+
+7. Java 的引用类型:
+
+    - 强引用: 发生 GC 时不会被回收.
+    - 软引用: 有用但不是必须的对象, 在发生内存溢出之前会被回收.
+    - 弱引用: 有用但不是必须的对象, 在下一次 GC 时会被回收.
+    - 虚引用: 无法通过虚引用获得对象, 虚引用的用途是在 GC 时返回一个通知.
+
+8. JVM 垃圾回收算法:
+
+    - 标记-清除算法(Mark-Sweep): 标记无用对象, 然后进行清除回收. 缺点: 效率不高, 无法清除垃圾碎片.
+    - 复制算法: 将容量划分为两个大小相等的内存区域. 每次只使用其中的一块. 当一块用完的时候将或者的对象复制到另一块上, 然后把已使用的内存空间一次清理掉. 缺点: 内存使用率不高, 只有原来的一半.
+    - 标记-整理算法(Mark-Compact): 标记无用对象, 让所有存活的对象都向一端移动, 然后直接清除掉端边界以外的内存.
+    - 分代算法: 根据对象存活周期的不同将内存划分为几块, 一般是新生代和老年代, 新生代采用复制算法, 老年代采用标记清理算法.
+
+9. JVM 垃圾回收器:
+
+    - Serial: 最早的单线程串行垃圾回收器.
+    - Serial Old: Serial 垃圾回收器的老年代版本, 同样也是单线程的。
+    - ParNew: Serial 的多线程版本 (新生代收集器).
+    - Parallel Scavenge: 是吞吐量优先的收集器 (吞吐量指的是 运行用户代码时间 / (运行用户代码时间 + 垃圾收集时间))
+    - Parellel Old: 是 Parallel 老年代版本.
+    - CMS: 一种以获取最短回收停顿时间为目标的收集器.
+    - G1: 一种兼顾吞吐量和停顿时间的收集器.
+
+10. CMS 垃圾回收器:
+
+    CMS (Concurrent Mark-Sweep) 以牺牲吞吐量为代价来获得最短回收停顿时间的来及回收器. 对于要求服务器响应速度的应用上, 这种垃圾器非常合适.  它基于**标记-清除**算法实现, 整个过程分为四个部分:
+
+    - 初始标记 (CMS initial mark)
+    - 并发标记 (CMS concurrent mark)
+    - 重新标记 (CMS remark)
+    - 并发清除 (CMS concurrent sweep)
+
+    其中初始标记和重新标记需要 `Stop The World`, 而并发标记和并发清除都可以和用户线程一起并发执行. 它的缺点如下:
+
+    - 对 CPU 资源敏感
+    - 无法处理浮动垃圾, 可能出现 `Concurrent Mode Failure` 失败导致另一次 `Full GC` 产生.
+    - 可能导致大量空间碎片.
+
+11. 新生代和老年代收集器:
+
+    - 新生代回收器: Serial, ParNew, Parallel Scavenge
+    - 老年代回收器: Serial Old, Parallel Old, CMS
+    - 整堆回收器: G1
+
+12. 分代垃圾回收器工作原理:
+
+    分代回收器有两个分区: 老生代和新生代. 新生代默认的空间占总空间的 1/3, 老生代默认的空间占总空间的 2/3. 新生代使用的是复制算法, 新生代里有 3 个分区: Eden, To Survivor, From Survivor, 它们默认的占比是 
+
+    8:1:1.
+
+    大多数情况下, 对象在新生代 Eden 区分配. 当 Eden 区没有足够的空间进行分配时, 虚拟机将发起一次 Mino r GC. 大的对象可以直接在老年代进行分配, 避免在 Eden 区以及两个 Survivor 区之间发生大量的内存复制, 可以通过 `-XX:PretenureSizeThreshold` 设置大于这个值的对象直接在老年代分配. 虚拟机给每个对象定义一个对象年龄计数器, 对象在 Eden 出生并经过一个 Minor GC 后仍然存活, 并且能够被 Survivor 容纳的话, 将被移动到 Survivor 空间中, 并且对象年龄设为 1. 对象在 Survivor 区每熬过一次 Minor GC, 年龄就增加 1 岁. 当它的年龄增加到一定程度(默认 15 岁), 将会晋升到老年代中, 可以通过 `-XX:MaxTenuringThreshold=15` 来进行设置.  
+
+13. JVM 调优工具:
+    - jconsole: 用于对 JVM 中的内存, 线程和类进行监控
+    - jvisualvm: 可以分析内存快照, 线程快照, 程序死锁, 监控内存的变化, gc 变化.
+14. 常用的 JVM 调优参数:
+    - -Xms: 初始化堆大小(-Xms2g)
+    - -Xmx: 堆最大内存(-Xmx2g)
+    - -Xmn:新生代大小(-Xmn10M)
+    - -XX:+PrintGC: 开启打印 gc 信息
+    - -XX:+PrintGCDetail: 打印 gc 详细信息
+    - -XX:+HeapDumpOnOutOfMemoryError: 出现内存溢出异常时 Dump 出当前的内存堆转储快照
+    - -Xss128k: 设置栈内存容量
+    - -XX:NewRatio=4: 设置年轻的和老年代内存比例为 1:4
+    - -XX:SurvivorRatio=8: 设置新生代 Eden 和 Survivor 比例为 8:2
+
+1. 参考:
+
+    [1] : [Java Virtual Machine (JVM) & its Architecture](https://www.guru99.com/java-virtual-machine-jvm.html)
+
+    [2] : [The JVM Architecture Explained](https://dzone.com/articles/jvm-architecture-explained)
+
+------
+
 #### 对象拷贝:
 
 1. 克隆:
@@ -405,5 +527,96 @@
 
     JSP 的 9 大内置对象都是生成的对应的 `Servlet` 的 `_jspService()` 方法的局部变量
 
-    - request: HttpServletRequest 
+    - request: HttpServletRequest 对象实例, 该对象封装了一次请求, 客户端的请求参数都封装在该对象里. 常用方法有 `getParamter()`, `getParameterValues()`, `setAttribute()`, `getAttribute()`, `setCharacterEncoding()`.
+    - response: HttpServletResponse 对象实例, 代表服务器对客户端的响应. response 对象常用于重定向, 常用的方法有 `getOutputStream()`, `setRedirect()`.
+    - session: HttpSession 对象实例, 该对象代表一次会话, 当客户端浏览器与站点建立连接时, 会话开始; 当客户端关闭浏览器时, 会话结束. 服务端根据 sesssionId 进行区分.
+    - pageContext: PageContext 对象实例, 代表 JSP 页面上下文. 常用方法有 `getServletContex()`, `getServletConfig()`, `getOut()`.
+    - application: ServletContext 对象实例, 代表 JSP 所属的 Web 应用本身.
+    - config: ServletConfig 对象实例, 代表该 JSP 的配置信息.
+    - page: 代表页面本身, 也就是 Servlet 中的 this.
+    - out: JspWriter 对象实例, 代表 JSP 页面的输出流, 用于输出内容, 形成 HTML 页面.
+    - exception: Throwable 对象实例, 代表其它页面中的异常和错误, 只有当编译指令  page 的 isErrorPage 属性为 true 时, 该对象才可以使用.
+    
+3. JSP 四种作用域:
+
+    - application: 对于整个 Web 页面有效, 一旦 JSP, Servlet 将数据放入 application 中, 该数据将可以被该应用下其它所有 JSP, Servlet 访问.
+    - session: 仅对一次会话有效, 一旦 JSP, Servlet 将数据放入 session 中, 该数据将可以被本次会话的其它所有的 JSP, Servlet 访问.
+    - request: 仅对本次请求有效, 一旦 JSP, Servlet 将数据放入 request 中, 该数据将可以被本次请求的其它所有的 JSP, Servlet 访问.
+    - page: 仅对当前页面有效. 一旦 JSP, Servlet 将数据放入 request 中, 该数据只可以被当前页面的 JSP 脚本, 声明部分访问.
+
+4. Session 和 Cookie 区别:
+
+    // TODO 登陆的实现, 忘记在哪里看的可以从 JSESSIONID 中解析出用户名和密码了
+
+    Cookie 是服务器在本地机器上存储的小段文本并随每个请求发送至同一个服务器. Cookie 采用的是在客户端保持状态的方案, 它的使用需要用户打开客户端的 Cookie 支持. Cookie 主要包括: 名字, 值, 过期时间, 路径和域. 路径与域一起构成了 Cookie 的作用范围. 若不设置过期时间, 则表示这个 Cookie 的生命周期为浏览器会话期间, 关闭浏览器, Cookie 就消失了.
+
+    Session 机制是一种服务器端的机制, 客户端第一次访问服务器时, 为生成一个 sessionId, 这个 sessionId以 Cookie 形式保存在客户端,  服务器端根据这个 sessionId 就可以判断该请求是同一个客户端发送的请求.
+
+    浏览器不支持 Cookie 解决办法: 
+
+    - URL重写，就是把 sessionId 直接附加在 URL 路径的后面.
+    - 表单隐藏字段。就是服务器会自动修改表单，添加一个隐藏字段，以便在表单提交时能够把 sessionId 传递回服务器
+
+5. 避免 SQL 注入:
+
+    - 使用预处理 PreparedStatement
+    - 使用正则表达式过滤掉字符中的特殊字符
+
+6. XSS 攻击以及避免:
+
+    跨站脚本攻击 (Cross-Site Scripting) 是一种代码注入攻击. 攻击者通过在目标网站上注入恶意脚本, 使之在用户的浏览器上运行.
+
+    避免的核心是必须对输入的数据做过滤处理.
+
+7. CSRF 攻击及避免:
+
+    跨站请求伪造 (Cross-Site Request Forgery) 是盗用者盗用了你的身份, 以你的名义发送恶意请求.
+
+    - 验证请求来源地址
+    - 关键操作添加验证码
+    - 在请求地址添加 token 并验证(Spring Security 中默认开启)
+
+8. 参考:
+
+    [1] : [Cookie 与 Session 的区别](https://juejin.im/entry/5766c29d6be3ff006a31b84e)
+
+    [2] : [sql注入基础原理](https://www.jianshu.com/p/078df7a35671)
+
+    [3] : [如何防止XSS攻击？](https://tech.meituan.com/2018/09/27/fe-security.html)
+
+    [4] : [如何防止CSRF攻击？](https://juejin.im/post/5bc009996fb9a05d0a055192)
+
+------
+
+#### 网络
+
+1. HTTP 响应码 301 和 302 区别:
+
+    - 301: 永久重定向. 301 对搜索引擎优化更有利.
+    - 302: 暂时重定向. 302 可能导致域名劫持.
+
+    浏览器在拿到服务器返回的这个状态码后会自动跳转到一个新的 URL 地址, 这个地址可以从响应的 `Location` 首部中获取.
+
+2. forward 和 redirect 区别:
+
+    - forward: forward 是发生在服务器端, 客户端并不知晓这个过程, 反映在浏览器就是浏览器地址不会发生变化. 服务器在进行转发到另一个 url 时, 可以共享客户端的 request 数据. 
+    - redirect: redirect 会给客户端的第一次请求返回一个状态码为 302 的响应, 并且新的请求地址在响应的响应头的 `Location` 字段里面. 然后客户端获取到新的请求地址后, 向新的请求地址发送请求. 客户端是知晓重定向的过程的, 反映在浏览器就是浏览器地址会发生变化.
+
+3. OSI 的七层模型:
+
+    - 物理层: 利用传输介质为数据链路层提供物理连接, 实现比特流的透明传输.
+    - 数据链路层: 负责建立和管理节点间的链路.
+    - 网络层: 通过路由选择算法, 为报文或分组通过通信子网选择最恰当的路径.
+    - 传输层: 向用户提供可靠的端到端的差错和流量控制, 保证报文的正确传输.
+    - 会话层: 向两个实体的表示层提供建立和使用连接的方法.
+    - 表示层: 处理用户信息的表示问题, 如编码, 数据格式转换和加密解密等.
+    - 应用层: 直接向用户提供服务, 完成用户希望在网络上完成的各种工作.
+
+4. 参考:
+
+    [1] : [http状态码301和302详解及区别](https://blog.csdn.net/grandPang/article/details/47448395)
+
+    [2] : [HTTP redirect: 301 (permanent) vs. 302 (temporary)](https://stackoverflow.com/questions/1393280/http-redirect-301-permanent-vs-302-temporary)
+
+    
 
