@@ -1,3 +1,170 @@
+NIO 网络编程:
+
+1. Java IO 操作类型:
+
+    - 基于字节: `Inputstream` 和 `OutputStream`
+    - 基于字符: `Writer` 和 `Reader`
+    - 字节流到字符流的转换: `InputStreamReader` , 它内部使用 `StreamDecoder` 采用 `UTF-8` 编码将输入的字节流转换为字符流.
+
+2. 访问文件的方式:
+
+    -  传统访问方式: 
+        - 读: 用户线程调用读接口时, 操作系统在内核的高速缓存中能够找到数据, 将它复制到用户地址空间然后返回; 如果找不到, 则将将当前线程阻塞, 然后从磁盘中读取数据到内核的高速缓存中, 再将它复制到用户地址空间然后返回.
+        - 写: 只是简单的将数据从用户地址空间复制到内核的高速缓存中, 对于用户程序来说, 写操作已经完成. 操作系统会将文件异步写入到磁盘中.
+    - 内存映射:
+        - 将用户的地址空间映射到内核的高速缓存中, 这样不用从内核的高速缓存复制数据到用户空间.
+    - 直接 I/O 的方式:
+        - 磁盘控制器直接将文件复制到用户地址空间而不用经过内核地址空间(数据库管理系统会采用这种方式).
+    - 异步直接 I/O 方式:
+        - 和同步方式相比就是不会阻塞当前的用户线程.
+
+3. NIO Socket :
+
+    ```java
+    /**
+     * 客户端代码
+     */
+    public class SocketClient {
+        public void startClient() {
+            InetSocketAddress hostAddress = new InetSocketAddress("127.0.0.1", 8090);
+            SockectChannel client = SocketChannel.open(hostAddress);
+            System.out.println("Client started");
+            String threadName = Thread.currentThread.getName();
+            List<String> messages = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                messages.add(threadName + "test" + i);
+            }
+            for (String message : messages) {
+                byte[] messageBytes = message.getBytes();
+                ByteBuffer buffer = ByteBuffer.wrap(messageBytes);
+                client.write(buffer);
+                System.out.println(message);
+                buffer.clear();
+                Thread.sleeep(5000);
+            }
+            client.close();
+        }
+    }
+    
+    /**
+     * 服务端代码
+     */
+    public class SocketServer {
+        private Selector selector;
+        private InetSocketAddress listenAddress;
+        
+        public SocketServer(String address, int port) {
+            listenAddress = new InetSocketAddress(address, port);
+        }
+        
+        /**
+         * 启动服务端
+         */
+        public void startServer() throws IOException {
+            this.selector = Selector.open();
+            // 相当于 ServerSocket
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.bind(listenAddress);
+            // 这个一定要注册, 否则无法接收到连接请求
+            serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
+            System.out.println("Server Started");
+            while (true) {
+                // 该方法会阻塞当前线程直到一个或多个事件发生
+                this.selector.select();
+                Iterator<SelectionKey> keys = this.selector.selectedKeys().iterator();
+                while (keys.hasNext()) {
+                    SelectionKey key = keys.next();
+                    keys.remove();
+                    if (!key.isValid()) {
+                        continue;
+                    }
+                    if (key.isAcceptable()) {
+                        this.accept(serverSocketChannel, key);
+                    } else if (key.isReadable()) {
+                        this.read(key);
+                    }
+                }
+            }
+        }
+        
+        /**
+         * 接受连接
+         */
+        private void accept(ServerSocketChannel serverSocketChannel, SelectionKey key) throws IOException {
+            SocketChannel channel = serverSocketChannel.accept();
+            channel.configureBlocking(false);
+            Socket socket = channel.socket();
+            SocketAddress removeAddress = socket.getRemoteSocketAddress();
+            channel.register(this.selector, SelectionKey.OP_READ);
+        }
+        
+        /**
+         * 读取数据
+         */
+        private void read(SelectionKey key) throws IOException {
+            SocketChannel channel = (SocketChannel)key.channel();
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            int numRead = -1;
+            numRead = channel.read(buffer);
+            if (numRead == -1) {
+                Socket socket = channel.socket();
+                SocketAddress remoteAddress = socket.getRemoteAddress();
+                System.out.println("Connection closed by client: " + removeAddress);
+                channel.close();
+                return;
+            }
+            byte[] data = new byte[numRead];
+            System.arraycopy(buffer.array(), 0, data, 0, numRead);
+            System.out.println("Got: " + new String(data));
+        }
+    }
+    
+    public class Test {
+        public static void main(String[] args) {
+            Runnable server = () -> {
+            	try {
+                    new SocketServer("127.0.0.1". 8090);
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            Runnable client = () -> {
+               try {
+                   new SocketClient().startClient();
+               } catch (IOException e) {
+                   e.printStackTrace();
+               } catch (InterruptedException e) {
+                   e.printStackTrace();
+               }
+            };
+            // 启动服务器
+            new Thread(server).start();
+            // 启动客户端
+            new Thread(client, "client-A").start();
+            new Thread(client, "client-B").start();
+        }
+    }
+    ```
+
+1. 参考
+
+    [1] : [Java Nio Socket Example](https://examples.javacodegeeks.com/core-java/nio/java-nio-socket-example/)
+
+    [2] : [聊聊同步、异步、阻塞与非阻塞](https://www.jianshu.com/p/aed6067eeac9)
+
+    [3] : [聊聊Linux 五种IO模型](https://www.jianshu.com/p/486b0965c296)
+
+    [4] : [聊聊IO多路复用之select、poll、epoll详解](https://www.jianshu.com/p/dfd940e7fca2)
+
+    [5] : [Getting started with new I/O (NIO)](https://developer.ibm.com/tutorials/j-nio/)
+    
+    [6] : [Java Nio Socket Example](https://examples.javacodegeeks.com/core-java/nio/java-nio-socket-example/)
+    
+    [6] : [Different I/O Access Methods for Linux, What We Chose for Scylla, and Why](https://www.scylladb.com/2017/10/05/io-access-methods-scylla/)
+
+------
+
 #### 多线程：
 
 1. 进程和线程的区别:
@@ -612,11 +779,170 @@
     - 表示层: 处理用户信息的表示问题, 如编码, 数据格式转换和加密解密等.
     - 应用层: 直接向用户提供服务, 完成用户希望在网络上完成的各种工作.
 
-4. 参考:
+4. TCP 和 UDP 区别:
+
+    - UDP: UDP 传输数据之前不需要先建立连接, UDP 提供的是不可靠的服务; UDP 是面向数据报的; UDP 传输速度较快.
+    - TCP: TCP 传输数据前需要先建立连接, TCP 提供可靠的, 面向连接的服务; TCP 是面向字节流的; TCP 传输速度较慢.
+
+5. TCP 三次握手:
+
+    - 第一次握手(SYN=1, seq=x):
+
+        客户端发送一个连接请求报文, 此时 SYN=1, seq=x,  客户端进入 `SYN-SENT` 状态(SYN=1 的报文不能携带数据)
+
+    - 第二次握手(SYN=1, ACK=1, seq=y,ackNum=x+1)
+
+        服务端收到连接请求报文, 发送一个确认报文, 此时 SYN=1, ACK=1, seq=y, ackNum=x+1, 服务端进入 `SYN-RCVD`
+
+    - 第三次握手(SYN=0, ACK=1, ackNum=y+1)
+
+         客户端收到服务端的确认后, 向服务端发送一个确认报文, 此时 SYN=0, ACK=1, ackNum=y+1(如果该确认报文不携带数据, 可以不用消耗一个序号, 如果携带数据就需要消耗一个序号). 此时客户端进入 `ESTABLISHED` 状态, 服务端收到客户端的确认后也进入 `ESTABLISHED` 状态, TCP 连接建立成功.
+
+    采用三次握手原因:
+
+    防止客户端已失效的连接请求到达服务端. 例如客户端发送了一次连接请求, 但是没有收到确认, 然后重传了一次连接请求, 后来收到了连接确认, 建立连接, 传输完数据之后, 释放了连接. 然后这个时候第一次发送的连接请求因为长时间的网络滞留达到了服务端, 服务端发送了确认后, 建立了连接, 此时由于客户端并没真正地发送连接请求, 因此并不会向服务端发送数据, 而服务端却一直等待客户端发送数据, 服务端的资源因此被白白浪费掉了.
+
+6. TCP 四次挥手:
+
+    - 第一次挥手(SYN=1, seq=u):
+
+        客户端应用进程发送 TCP 连接释放报文, 此时 FIN=1, seq=u, 客户端进入 `FIN-WAIT-1`(FIN 报文段即使不携带数据, 也要消耗掉一个序号)
+
+    - 第二次挥手(ACK=1, ackNum=u+1)
+
+        服务端收到连接释放报文段后发出确认报文, 此时 ACK=1, seq=v, ackNum=u+1, 服务端进入 `CLOSE-WAIT` z状态. 此时客户端没有数据向服务端发送了, 但是服务端向客户端发送数据, 客户端仍然要接收(也就是客户端到服务端已经关闭, 服务端到客户端还未关闭). 客户端受到服务端的确认后, 进入 `FIN-WAIT-2` 状态.
+
+    - 第三次挥手(FIN=1, seq=w, ackNum=u+1)
+
+        此时服务端没有数据要向客户端发送, 服务端发送 TCP 连接释放报文, 此时 FIN = 1, seq=w, ackNum=u+1(这里 ackNum=u+1 是因为客户端已经没有向服务端发送数据了), 此时服务端进入 `LAST-ACK` 状态.
+
+    - 第四次挥手(ACK=1, seq=u+1, ackNum=w+1)
+
+        客户端受到服务端连接释放报文后, 发出确认报文, 此时 ACK=1, seq=u+1, ackNum=w+1, 然后进入 `TIME-WAIT` 状态, 经过 2MSL(Maximum Segment Lifetime 最长报文段寿命) 才进入 `CLOSED` 状态.
+
+    客户端等待 `TIME-WAIT` 原因:
+
+    保证客户端发送的最后一个确认报文能够到达服务端. 如果客户段的最后一个确认报文丢失了, 处于 `LAST-ACK` 状态的服务端收不到已发送连接释放报文的确认, 就会超时重传这个连接释放报文, 这样客户端在 2MSL 时间内就可以收到超时重传的连接释放报文, 从而重新发送确认报文. 使得双方都可以正确地进入 `CLOSED` 状态.
+
+7. GET 和 POST 区别:
+
+    - GET 请求会被浏览器缓存, POST 不会
+    - GET 传递参数有大小限制, POST 没有
+    - GET 的参数会明文限制在 URL 上, POST 不会
+
+8. 参考:
 
     [1] : [http状态码301和302详解及区别](https://blog.csdn.net/grandPang/article/details/47448395)
 
     [2] : [HTTP redirect: 301 (permanent) vs. 302 (temporary)](https://stackoverflow.com/questions/1393280/http-redirect-301-permanent-vs-302-temporary)
 
-    
+    [3] : [三次握手与四次挥手]([https://hit-alibaba.github.io/interview/basic/network/TCP.html#%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E4%B8%8E%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B](https://hit-alibaba.github.io/interview/basic/network/TCP.html#三次握手与四次挥手))
 
+    [4] : [四种常见的 POST 提交数据方式](https://imququ.com/post/four-ways-to-post-data-in-http.html)
+
+    [5] : [九种跨域方式实现原理](https://juejin.im/post/5c23993de51d457b8c1f4ee1)
+
+------
+
+#### Spring/Spring MVC
+
+1. Spring 降低开发复杂度方法
+
+    Spring 的三大要素是: 控制反转, 依赖注入, 面向切面编程
+
+    * 基于 POJO 的轻量级和最小侵入性编程
+
+    * 通过依赖注入和面向接口编程实现松耦合
+
+    * 基于切面和惯例进行声明式编程
+
+    * 通过切面和模版减少样式代码
+
+2. AOP:
+
+    Aspect-oritented programming (面向切面编程) 是在运行时，动态地将代码切入到类的指定方法, 指定位置上.
+
+3. IOC:
+
+    Inversioin of Control (控制反转) 是 Spring 的核心, 就是由 Spring 来负责控制对象的声明周期和对象之间的关系.
+
+4. DI: 
+
+    Dependency Injection (依赖注入): 由 Spring 将组件所需要的依赖注入到组件中.
+
+5. Spring 主要模块:
+
+    * Spring 核心容器:
+
+        Spring 应用中 bean 的创建, 配置和管理.
+
+        - Beans
+        - Core
+        - Context
+        - Expression
+        - Context Support
+
+    * Spirng AOP 模块:
+
+        对面向切面编程提供支持
+
+        * AOP
+        * aspects
+
+    * 数据访问与集成
+
+        提供对数据访问的支持
+
+        * JDBC
+        * Transaction
+        * ORM
+        * OXM
+        * Messaging
+        * JMS
+
+    * Web 与远程调用:
+
+        提供对构建 Web 应用的支持
+
+        - Web
+        - Web MVC
+        - Web servlet
+        - WebSocket
+
+6. Spring 常用注入方式:
+
+    - Setter 属性注入
+    - 构造方法注入
+    - 注解方式注入
+
+7. Spring bean 的作用域:
+
+    - 单例 (Singleton): 在整个应用中, 只创建一个实例.
+    - 原型 (Prototype): 每次注入或者通过 Spring 上下文获取的时候, 都会创建一个新的 bean 实例.
+    - 会话 (Session): 在 Web 应用中, 为每个会话创建一个 bean 实例.
+    - 请求 (Request): 在 Web 应用中, 为每个请求创建一个 bean 实例.
+
+8. Spring 自动装配:
+
+    - no: 没有自动装配, 应该用显示 bean 引用进行装配.
+    - byName: 根据 bean 的名称注入对象依赖项.
+    - byType: 根据类型注入对象依赖项.
+    - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
+    - autodetect: 先通过 constructor 构造, 如果不行, 则使用 byType 构造.
+
+9. @Autowired 注解作用:
+
+    该注解可以对类成员变量, 方法以及构造函数进行标注, 完成自动装配的功能, 通过对该注解的使用来消除 `setter` 方法.
+
+10. Spring 事务实现方式:
+
+    - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
+    - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
+
+11. 参考
+
+    [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
+
+    [2] : [依赖注入和控制反转的理解，写的太好了。](https://blog.csdn.net/bestone0213/article/details/47424255)
+
+    
