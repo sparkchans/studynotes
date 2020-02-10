@@ -6,7 +6,33 @@ NIO 网络编程:
     - 基于字符: `Writer` 和 `Reader`
     - 字节流到字符流的转换: `InputStreamReader` , 它内部使用 `StreamDecoder` 采用 `UTF-8` 编码将输入的字节流转换为字符流.
 
-2. 访问文件的方式:
+2. Linux 五种 IO 模型:
+
+    - 阻塞 IO(blocking I/O):
+
+      应用调用 `recvfrom` 系统调用, 当前线程被阻塞, 当数据到达并由内核地址空间复制到用户地址空间后, 返回应用线程.
+
+      ![](F:\studynotes\documents\interview\asserts\blocking io.png)
+
+    - 非阻塞 IO (nonblocking I/O):
+
+      应用循环去调用 `recvfrom` 系统调用, 该系统调用不阻塞当前应用线程, 若数据没有准备好, 则返回错误; 否则将数据由系统内核地址空间复制到用户地址空间, 然后返回.
+
+      ![](F:\studynotes\documents\interview\asserts\non-blocking io.png)
+
+    - IO 多路复用(I/O multiplexing):
+
+      应用调用 `select` 系统调用, 系统阻塞, 当监听的一个或多个 `Socket` 有数据到来时, 返回到应用, 应用然后调用 `recvfrom` 系统调用, 数据从内核地址空间复制到用户地址空间, 然后返回.
+
+      ![](F:\studynotes\documents\interview\asserts\select.png)
+
+    - 信号驱动 IO(signal driven I/O):
+
+    - 异步 I/O(asynchronous I/O): 
+
+      ![](F:\studynotes\documents\interview\asserts\aio.png)
+
+3. 访问文件的方式:
 
     -  传统访问方式: 
         - 读: 用户线程调用读接口时, 操作系统在内核的高速缓存中能够找到数据, 将它复制到用户地址空间然后返回; 如果找不到, 则将将当前线程阻塞, 然后从磁盘中读取数据到内核的高速缓存中, 再将它复制到用户地址空间然后返回.
@@ -18,7 +44,7 @@ NIO 网络编程:
     - 异步直接 I/O 方式:
         - 和同步方式相比就是不会阻塞当前的用户线程.
 
-3. NIO Socket :
+4. NIO Socket :
 
     ```java
     /**
@@ -147,7 +173,7 @@ NIO 网络编程:
     }
     ```
 
-1. 参考
+5. 参考
 
     [1] : [Java Nio Socket Example](https://examples.javacodegeeks.com/core-java/nio/java-nio-socket-example/)
 
@@ -158,10 +184,10 @@ NIO 网络编程:
     [4] : [聊聊IO多路复用之select、poll、epoll详解](https://www.jianshu.com/p/dfd940e7fca2)
 
     [5] : [Getting started with new I/O (NIO)](https://developer.ibm.com/tutorials/j-nio/)
-    
-    [6] : [Java Nio Socket Example](https://examples.javacodegeeks.com/core-java/nio/java-nio-socket-example/)
-    
+
     [6] : [Different I/O Access Methods for Linux, What We Chose for Scylla, and Why](https://www.scylladb.com/2017/10/05/io-access-methods-scylla/)
+
+    [7] : [Linux 网络 I/O 模型简介（图文）](<https://blog.csdn.net/anxpp/article/details/51503329>)
 
 ------
 
@@ -263,7 +289,7 @@ NIO 网络编程:
      - RUNNING: 接受新的任务, 处理等待队列中的任务.
      - SHUTDONW: 不接受新的任务提交, 但是会继续处理等待队列中的任务.
      - STOP: 不接受新的任务提交, 不再处理等待队列中的任务, 中断正在执行任务的线程.
-     - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换wie TIDYING 状态时, 会执行钩子方法 `terminated()`.
+     - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换为 TIDYING 状态时, 会执行钩子方法 `terminated()`.
      - TERMINATED:  `terminated()` 方法结束后, 线程池的状态就会变成这个.
 
 12. 线程池:
@@ -383,6 +409,12 @@ NIO 网络编程:
 16. ThreadLocal 原理及使用场景:
 
     ThreadLocal 为每个使用该变量的线程提供了独立的变量副本, 每一个线程都可以独立的改变自己的变量副本, 而不会影响其它线程所对应的副本. 使用场景有数据库连接和 Session 管理.
+
+    // TODO FutureTask 执行原理
+
+1. 参考:
+
+   [1] : [浅谈Java Future](<https://zhuanlan.zhihu.com/p/42682411>)
 
 ------
 
@@ -824,13 +856,17 @@ NIO 网络编程:
 
     保证客户端发送的最后一个确认报文能够到达服务端. 如果客户段的最后一个确认报文丢失了, 处于 `LAST-ACK` 状态的服务端收不到已发送连接释放报文的确认, 就会超时重传这个连接释放报文, 这样客户端在 2MSL 时间内就可以收到超时重传的连接释放报文, 从而重新发送确认报文. 使得双方都可以正确地进入 `CLOSED` 状态.
 
+7. 反向代理正向代理区别:
+
+    正向代理隐藏真实客户端，反向代理隐藏真实服务端
+
 7. GET 和 POST 区别:
 
     - GET 请求会被浏览器缓存, POST 不会
     - GET 传递参数有大小限制, POST 没有
     - GET 的参数会明文限制在 URL 上, POST 不会
 
-8. 参考:
+2. 参考:
 
     [1] : [http状态码301和302详解及区别](https://blog.csdn.net/grandPang/article/details/47448395)
 
@@ -841,6 +877,8 @@ NIO 网络编程:
     [4] : [四种常见的 POST 提交数据方式](https://imququ.com/post/four-ways-to-post-data-in-http.html)
 
     [5] : [九种跨域方式实现原理](https://juejin.im/post/5c23993de51d457b8c1f4ee1)
+
+    [6] : [反向代理为何叫反向代理？](<https://www.zhihu.com/question/24723688>)
 
 ------
 
@@ -939,10 +977,819 @@ NIO 网络编程:
     - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
     - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
 
-11. 参考
+11. 单点登录:
 
-    [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
+12. Spring JSP 视图渲染过程:
 
-    [2] : [依赖注入和控制反转的理解，写的太好了。](https://blog.csdn.net/bestone0213/article/details/47424255)
+     * `InternalResourceView#render()`方法
+
+     * `Application#forward()`方法
+
+     * `ApplicationFilterChain#doFilter()`方法
+
+     * `JspServlet.service()`方法
+
+     * `JspCompilationContext.compile()`方法
+
+     * `eclipse.Compiler.compile()`方法
+
+     然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
+
+13. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
+
+     - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
+     - ModelMethodProcessor: 处理返回值为 Model
+     - ViewMethodReturnValueHandler: 处理返回值为 View
+     - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
+     - StreamingResponseBodyReturnValueHandler: 
+     - HttpEntityMethodProcessor
+     - HttpHeadersReturnValueHandler
+     - CallableMethodReturnValueHandler
+     - DeferredResultMethodReturnValueHandler
+     - AsyncTaskMethodReturnValueHandler
+     - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+     - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
+     - ViewNameMethodReturnValueHandler: 处理直接返回String类型
+     - MapMethodProcessor: 处理返回Map类型
+     - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+
+     
+
+14. 参考
+
+      [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
+
+      [2] : [依赖注入和控制反转的理解，写的太好了。](https://blog.csdn.net/bestone0213/article/details/47424255)
+
+      [3] : [单点登录（SSO）看这一篇就够了](<https://yq.aliyun.com/articles/636281>)
+
+     [4] : [单点登录（SSO），从原理到实现](<https://cloud.tencent.com/developer/article/1166255>)
+
+------
+
+
+
+#### Spring  Boot/Cloud:
+
+1. Spring Boot 是什么?
+
+   Spring Boot 是为了简化 Spring 项目的开发:
+
+   - 自动化的配置: Spring Boot 提供了一系列的自动化的默认配置
+   - Starter 依赖: 通过一些列 Starter POM 依赖简化配置
+   - 提供了 Spring Boot CLI 运行 Groovy 脚本
+   - Actuator: 提供了Spring 的监控和管理
+
+2. 为什么要使用 Spring Boot?
+
+   - 配置简单
+   - 独立运行
+   - 自动装配
+   - 提供应用监控
+
+3. Spring Boot 核心配置文件:
+
+   - bootstrap 和 application, Spring Boot 中有两种上下文, 一种是 bootstrap, 另外一种是 application. bootstrap 是 application 的父上下文. bootstrap 加载优先于 application. bootstrap 主要是从额外的资源来加载配置信息, 还可以在本地外部配置文件中解密属性. 
+
+     bootstrap 里面的属性不能被覆盖. 当使用 Spring Cloud Config 配置中心时, 需要在 bootstrap 中配置属性来加载外部配置中心的配置信息.
+
+4. Spring Boot 配置文件类型:
+
+   - .properties:
+
+   - .yml
+
+     两者书写格式不一样, yml 文件优先级高于 properties 文件
+
+5. Spring Boot 实现热部署方式:
+
+   - 使用 devtools 启动热部署
+   - 使用 Intellij Idea 勾上自动编译或手动重新编译
+
+6. JPA 和 Hibernate 区别:
+
+   - JPA 是 Java 持久接口规范, Hibernate 属于 JPA 的具体实现
+
+7. Spring Cloud:
+
+   - Spring Cloud 是一系列框架的集合. 利用 Spring Boot 的开发便利性巧妙地简化了分布式系统基础设施的开发.
+
+8. Spring Cloud 核心组件:
+
+   - Eureka: 服务治理: 围绕服务注册与服务发现机制来完成对微服务应用实例的自动化管理.
+
+     - 服务提供者: 
+       - 服务注册: 在启动时将自己注册到服务注册中心, 通过 `@DiscoveryClient` 注解开启.
+       - 服务续约: 注册服务完成后会维持一个心跳来告诉服务注册中心自己还活着
+     - 服务消费者:
+       - 服务注册: 服务消费者也需要将自己注册到服务
+       - 获取服务: 服务消费者可以从服务注册中心获取到一份服务清单
+       - 服务调用: 通过服务清单选择对应的服务进行调用. 服务有 Region 和 Zone 的概念, 优先访问同一个 Zone 中的服务.
+       - 服务下线: 服务正常关闭时, 会将关闭告诉给服务注册中心, 然后由服务注册中心将整个事件传播出去.
+     - 服务注册中心: 服务注册中心会定时剔除没有续约的服务. 通过 `@EnableEurekaServer` 注解开启
+
+   - Ribbon: 实现负载均衡. 通过服务的线性轮训将请求按比例摊送到服务的提供者. 通过 `@LoadBalanced`注解标记 `RestTemplate`以使用 `LoadBalancerClient` 来配置它.
+
+   - Feign: 实现声明式服务调用:
+
+     - 使用 `@EnableFeignClient` 注解开启
+     - 使用`@FeignClient` 注解指定服务名来绑定服务
+     - 实际项目中将服务的接口抽象与实体抽象出来, 服务提供者通过实现这些定义的接口, 然后对外提供服务, 服务调用者继承这些接口以实现声明式服务调用.
+
+   - Hystrix: 提供了断路器, 线程隔离等一些列服务保护的功能.
+
+     解决由于依赖服务的不可用性导致自身服务因为请求的挤压导致自身服务的瘫痪.
+
+     - `@EnableCircuitBreaker` 注解开启, 通过 `@HystrixCommand` 注解定义错误处理方法.
+
+   - Zuul: 网关管理, 由网关转发请求给对应的服务
+
+     - 不使用网关管理, 运维需要在 Nginx 中手动配置各个服务与路由的映射关系, 也就是说运维需要知道有多少个对外提供的服务,  然后进行配置.
+     - 网关类似于门面设计模式, 相当于整个微服务架构的门面. 有了网关之后, 运维只需要在 Nginx 中将请求转发到对应的服务网关上就好了. 而且通过网关还能对外隐藏服务的细节, 提高了安全性.
+     - 通过`@EnableZuulProxy`注解开启网关服务,  通过 提供`ZuulFilter`进行过滤, 过滤器的阶段: Pre, Routing, Post, Error 
+     - 独立出授权认证服务, 在 API 网关中的过滤器对请求进行授权和认证.
+
+   - Config: 配置中心
+
+     - 连接配置仓库为客户端提供获取配置信息的接口. `@EnableConfigServer` 开启配置服务中心.
+     - 客户端: 创建 bootstrap.properties 配置文件, 配置对应的配置中心地址.
+
+9. 参考
+
+   [1] : [Spring Boot干货系列：（十）开发常用的热部署方式汇总](<http://tengj.top/2017/06/01/springboot10/>)
+
+   [2] : [SpringCloud(八)：API网关整合OAuth2认证授权服务](<https://www.jianshu.com/p/c987c208859d>) 
+
+------
+
+#### MySQL
+
+1. 架构:
+   - 客户端
+   - Server:
+     - 连接器
+     - 分析器
+     - 优化器
+     - 执行器
+   - 存储引擎:
+
+2. 数据库三泛式
+   - 第一范式(属性的原子性): 强调列的原子性, 即数据库表的每一列都是不可分割的原子数据项.
+   - 第二范式(记录的唯一性): 实体的属性完全依赖于主关键字.
+   - 第三范式(字段的冗余性): 任何非主属性不依赖于其它非主属性.
+
+3. 类型区别:
+
+   - char 和 varchar 区别:
+     - char: 固定长度类型. 效率高但是占用空间(最大长度255), 会去掉尾部多余的空格
+     - varchar: 可变长度, 存储的值是每个值占用的字节再加上一个用来记录其长度的字节的长度(最大长度 65535, 在开头有一个或者两个字节存储字符串长度).
+
+   - float 和 double 区别:
+     - float: 最多可以存储 8 位的十进制数, 占用 4 字节.
+     - double: 最多可以存储 16 位的十进制数, 占用 8 字节.
+
+   - TIMESTAMP 和 DATETIME 区别:
+
+     - TIMESTAMP: 占用 4 字节,  自动更新, 不能为 NULL, 该类型在第一次插入列数据和更新列数据时都会自动更新.
+     - DATETIME: 占用 8 字节, 可以为 NULL, 范围为 1001-9999, 底层采用整数存储, 整数二进制对应格式为 YYYYMMDDHHMMSS
+
+   - BLOB 和 TEXT:
+
+     MySQL 对这两种类型排序是根据 `max_sort_length` 指定的前多少个 Byte 排序的, 如果需要减少排序的字节数, 可以使用 `ORDER BY SUBSTRING(column, length)`
+
+     - BLOB 指的是 SMALLBLOB,
+     - TEXT 指的是 SMALLTEXT,
+
+   - enum 类型:
+
+     - 底层存储为一字节或两字节的整数. 枚举默认排序为数字的序号, 若需要使用字母排序可以使用 `FEILD(e, 'fish', 'apple')` 指定顺序, 最好在定义的时候按照字母排序进行定义.
+
+   - set 类型:
+
+     - 一个 set 类型可以存储多个值, 每个值占用二进制位的一位. 使用 `FIND_IN_SET`  函数可以通过字符串来进行查找.
+
+       ```java
+       SELECT perm FROM acl WHERE FIND_IN_SET('AN_READ', perm);
+       ```
+
+   - 案例:
+
+     - 存储 UUID , 去掉横线, 使用`UNHEX()` 函数将其转为为二进制字符串, 然后存储在 `binary(16)`, 这样只需要使用 16 Byte空间.
+
+     - 存储 IP 地址: 通过 `inet_aton()` 函数将 IP 地址转化为无符号整数存储, 查询时使用 `inet_ntoa()` 函数将整数转化为字符串.
+
+     - 重新构建 总结表和缓存表:
+
+       ```sql
+       CREATE TABLE my_summary_new LIKE my_summary
+       -- populate my_summary_new as desired
+       RENAME TABLE my_summary TO my_summary_old, my_summary_new TO my_summary -- 该操作为原子操作
+       ```
+
+        
+
+4. MySQL 行锁和表锁:
+   - 表级锁: 开销小, 加锁快, 不会出现死锁. 锁定粒度大,  发生锁冲突概率高, 并发量最低.
+   - 行级锁: 开销小, 加锁慢, 会出现死锁. 锁粒度小, 发生锁冲突概率低, 并发度最高.
+
+5. 表设计原则:
+
+   - 使用较小的数据类型:
+   - 使用 MySQL 自带的日期类型存储日期, 使用整型存储 IP 地址.
+   - 尽可能避免使用 NULL 的列: 一个可以为空的列会使用更多的存储空间并要求特殊的处理.
+   - 选择正确的数据类型: 
+
+6. 索引:
+
+   - 索引匹配:
+
+     - 全部匹配
+     - 匹配部分列
+     - 匹配某列的部分
+     - 匹配某列全部, 再匹配某列部分
+
+   - 索引按数据结构分类:
+
+     - B-Tree 索引:
+     - Hash 索引:
+
+   - 使用索引策略:
+
+     非主键索引的叶子节点包含有该行数据的主键, 然后再根据主键去查询对应的列
+
+     - 查询的时的索引列不能是表达式的一部分或者在函数里面
+
+       ```sql
+       SELECT actor_id FROM actor WHERE actor_id + 1 = 5;
+       SELECT ... WHERE TO_DAYS(CURRENT_DATE) - TO_DAYS(date_col) <= 10;
+       ```
+
+     - 可以在较长列的一部分长度上建立索引, 建立索引时要注意索引的选择性(与众不同的索引值占总的索引值的比例)
+
+     - 多列索引:
+
+       多列索引的顺序表示索引在排序的时候先按照第一列进行排序, 然后再按照第二列, 第三列进行排序. 在建立多列索引时, 将具有最大选择性的索引进行放在前面.
+
+       在排序的时候使用多列索引: 假设现在有多列索引 `(rental_date, inventory_id, customer_id)`, 原则是前面的列进行了排序才能使用后面的列进行排序.
+
+       ```sql
+       -- 能够使用索引排序的情况
+       SELECT rental_id, staff_id 
+         FROM rental
+        WHERE rental_date = '2005-05-25' -- 因为这里第一个索引列为常量
+        ORDER BY inventory_id, customer_id;
+        
+        SELECT rental_id, staff_id 
+         FROM rental
+        WHERE rental_date > '2005-05-25' 
+        ORDER BY rental_date, inventory_id; -- 注意这里
+        
+        -- 不能使用索引排序
+         SELECT rental_id, staff_id 
+           FROM rental
+          WHERE rental_date > '2005-05-25' 
+          ORDER BY rental_date DESC, inventory_id ASC; -- 这里排序方式不同
+          SELECT rental_id, staff_id 
+           FROM rental
+          WHERE rental_date > '2005-05-25' 
+          ORDER BY inventory_id, staff_id; -- 这里引用了没有索引的列
+          SELECT rental_id, staff_id 
+           FROM rental
+          WHERE rental_date = '2005-05-25' 
+          ORDER BY customer_id; -- 这里没有构成最左匹配原则
+          
+          SELECT rental_id, staff_id 
+            FROM rental
+           WHERE rental_date > '2005-05-25' 
+           ORDER BY inventory_id, customer_id; -- 注意这里日期是一个范围
+        
+       ```
+
+     - 分页时使用延迟 JOIN:
+
+       ```sql
+       SELECT <cols> 
+         FROM profiles 
+        WHERE sex='M'
+        ORDER BY rating
+        LIMIT 100000,10 -- 这样会很慢
+        -- 使用延迟 JOIN
+        SELECT <cols>
+          FROM profiles
+               INNER JOIN(
+               	SELECT <primary key cols>
+                     FROM profiles
+                    WHERE sex = 'M'
+                    ORDER BY rating
+                    LIMIT 100000, 10
+               ) AS x
+                       ON profiles.id = x.id
+       ```
+
+       
+
+   - 聚集索引: 数据实际的存放顺序和索引的顺序相同
+
+     - 不要使用 UUID 作为主键,
+
+7. 获取版本:
+
+   - `select version()`
+
+8. 存储引擎:
+
+   - InnoDB: 每一张 InnoDB 表都会有一个主键索引(聚集索引), 用于加快查询. 创建表会产生两个文件: .frm 和 .ibd
+     - 支持事务
+     - 支持表锁和行锁
+     - 支持外键
+
+9. 事务实现原理:
+
+   - 日志: 二进制日志(服务层), 回滚日志(存储引擎层), 重做日志(存储引擎层)
+
+   - 原子性: 回滚日志
+   - 一致性: 重做日志
+
+10. 隔离的四个级别：
+
+   - 脏读(Read Uncommitted):
+   - 读提交(Read Committed): 解决脏读
+   - 重复读(Repeatable Read): 解决重复读
+   - 序列化(Serializable): 解决幻读
+
+11. 查询优化:
+
+    - 行的访问类型: `EXPLAN` 输出中的 type 列, 包括: 全表扫描, 索引所描, 范围扫描,  唯一主键查询, 常量查询. 在 `EXPLAN`  中的 extra 列为 where 表明存储引擎层读取所有行数据, 然后将行数据返回给服务层, 然后服务层根据 where 条件将不需要的数据过滤掉. MySQL 使用 where 条件的三种方式:
+
+      - 索引下沉: 在索引查找阶段使用 where 条件过滤不需要的数据. 发生在存储引擎层.
+      - 在覆盖索引数据查询中使用 where 条件过滤索引中保存的数据而不需要去读取行数据. 发生在服务器层(Using index in extra column).
+      - 从磁盘读取行数据后, 然后使用 where 条件过滤数据. 发生在服务层(Using where in extra column).
+
+    - 优化:
+
+      - count() 优化: 
+
+        ```sql
+        -- 优化 1
+        SELECT COUNT(*)
+          FROM City
+         WHERE ID > 5;
+         -- 优化
+         SELECT (SELECT COUNT(*) FROM City) - COUNT(*)
+           FROM City 
+          WHERE ID <= 5; -- 子查询是一个常量
+        -- 优化 2
+        SELECT SUM(IF(color = 'blue', 1, 0)) AS 'blue'
+        	   SUM(IF(color = 'red', 1, 0)) AS 'red'
+          FROM items;
+          -- 优化
+          SELECT SUM(color = 'blue') AS 'blue'
+        	     SUM(color = 'red') AS 'red'
+            FROM items;
+          
+          SELECT COUNT(color = 'blue' OR NULL) AS 'blue'
+                 COUNT(color = 'red' OR NULL) AS 'red'
+            FROM items;     
+        ```
+
+        
+
+      - join 优化:
+
+        - 在 ON 的列上使用索引
+
+        - 只需要在 JOIN 顺序的第二个表上建立索引
+
+        - GROUP BY 或 ORDER BY 引用单个表中的列
+
+          ```sql
+          SELECT actor.first_name, actor.last_name, COUNT(*)
+            FROM film_actor
+                 INNER JOIN actor USING(actor_id)
+           GROUP BY actor.first_name, actor.last_name;
+           -- 优化
+           SELECT actor.first_name, actor.last_name, COUNT(*)
+            FROM film_actor
+                 INNER JOIN actor USING(actor_id)
+           GROUP BY actor.actor_id;
+           SELECT actor.first_name, actor.last_name
+             FROM actor
+                  INNER JOIN (
+                  	SELECT actor_id, COUNT(*) AS count
+                        FROM film_actor
+                       GROUP BY actor_d
+                  ) AS c USING(actor_id); -- 子查询产生的表是没有索引的
+          ```
+
+    ```sql
+    SELECT COUNT(*) FROM tbl_name
+    SELECT MIN(key_part1), MAX(key_part1) FROM tbl_name
+    SELECT MAX(key_part2) FROM tbl_name WHERE key_part1 = constant
+    SELECT ... FROM tbl_name ORDER BY key_part1, key_part2 LIMIT 10;
+    SELECT ... FROM tbl_name ORDER BY key_part1 DESC, key_part2 DEORSC LIMIT 10;
+    -- 下面查询只会访问索引树, 假设索引列为数字
+    SELECT key_part1, key_part2 FROM tbl_name WHERE key_part1 = val;
+    SELECT COUNT(*) FROM tbl_name WHERE key_part1 = val1 AND key_part = val2
+    SELECT key_part2 FROM tbl_name GROUP BY key_part1;
+    -- 下面查询使用索引对数据进行排序, 不必单独做一次排序
+    SELECT ... FROM tbl_name ORDER BY key_part1, key_part2
+    SELECT ... FROM tbl_name ORDER BY key_part1 DESC, key_part2 DESC;
+    -- 范围查询
+    SELECT * FROM t1 WHERE key_col > 1 AND key_col < 10
+    SELECT * FROM t1 WHERE key_col = 1 OR key_col IN (15, 18, 20)
+    SELECT * FROM t1 WHERE key_col LIKE 'ab%' OR key_col BETWEEN 'bar' AND 'foo'
+    ```
 
     
+
+12. 性能监控:
+
+    - 查看执行过程占用时间:
+      - set profiling=1;
+      - show profiles;
+      - show profile for query 1;
+      - show processlist;
+      - show variables like "%max_connections%";
+    - 主键:
+      - 代理主键
+      - 自然主键
+    - 编码:
+      - utf8mb4
+    - 自增主键:
+      - 索引可维护性
+    - 冷热分离
+    - 索引:
+      - 优点:
+      - 用处:
+      - 分类:
+      - 数据结构:
+      - 匹配方式:
+
+13. 参考:
+
+    [1] : [MySQL到底有多少种日志类型需要我们记住的！](<https://database.51cto.com/art/201806/576300.htm>)
+
+    [2] : [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
+
+    [3] : [Function of deferred join in MySQL](https://stackoverflow.com/questions/31555154/function-of-deferred-join-in-mysql)
+
+    [4] : [b树和b+树的区别](<https://blog.csdn.net/login_sonata/article/details/75268075>)
+
+------
+
+#### Redis 
+
+1. Redis 常用全局命令:
+   - 查看所有键: `keys *` , 时间复杂的 O(n)
+   - 查看键总数: `dbsize`, 时间复杂的 O(1)
+   - 查看键是否存在: `exists key`
+   - 删除键: `del key`
+   - 设置键过期: `expire key`
+   - 观察键过期剩余时间: `ttl key`
+   - 查看键的类型: `type key`
+   - 查看键数据类型内部实现: `object encoding key`
+
+2. 数据类型:
+
+   - 字符串(String):
+   - 哈希(Hash):
+   - 列表(List):
+   - 集合(Set):
+   - 有序集合(ZSet):
+
+3. 字符串命令:
+   - set:
+     - ex: 秒级过期时间
+     - px: 毫秒级过期时间
+     - nx: 键不存在才设置成功
+     - xx: 键存在才设置成功
+
+   - setnx
+
+   - setxx
+
+   - get: 获取值
+
+   - mset: 批量设置值
+
+   - mget: 批量获取值
+
+   - incr:
+
+   - decr:
+
+   - incrby:
+
+   - decrby:
+
+     Redis 不需要使用 CAS 机制实现计数操作, 因为 Redis 本身是单线程的, 所有命令都是顺序执行的.
+
+   - 数据结构:
+     - int: 8 字节
+     - embstr: 小于等于 39 字节字符串.
+     - raw: 大于 39 字节字符串
+
+4. 哈希命令:
+
+   键的值本身又是一个键值操作
+
+   - hset key field value
+   - hget key field 
+   - hdel key field
+   - hlen key: 计算 field 数量
+   - hmset: 批量设置
+   - hmget: 批量获取
+   - hexists key field
+   - hexists key field: 判断 field 是否存在
+   - hkeys key: 获取所有 field
+   - hvals key: 获取所有 value
+   - hgetall key: 获取所有 field value
+   - 数据结构: 
+     - ziplist(压缩列表): field 个数小于 512, value 长度小于 64 字节
+     - hashtable(哈希表): 读写复杂度为 O(1)
+   - 场景: 存储用户
+
+5. 列表命令:
+
+   可以分别从左端和右端放入或弹出, 可以充当栈或队列
+
+   - rpush key value
+   - rpop key
+   - lpush key value
+   - lpop key
+   - linsert key before|after pivot value
+   - lrange key 0 -1
+   - lset
+   - lrem key count value
+   - ltrim key start end
+   - brpop, blpop
+   - 数据结构:
+     - ziplist(压缩列表): 元素个数长度小于等于 512, 元素长度小于等于 64 字节
+     - linkedlist(链表):  
+   - lpush + brpop 实现简单的消息队列
+   - 存储数据的列表
+
+6. 集合命令:
+   - sadd key element
+   - srem key element
+   - scard key:  计算元素的个数
+   - sismember key element: 判断元素是否在集合中
+   - smembers key: 获取所有元素
+   - sinsert: 交
+   - sunion: 并
+   - sdiff: 差
+   - sinterstore destination key
+   - 内部数据结构实现:
+     - intset(整数集合): 元素为整数且个数小于等于 512 
+     - hashtable(哈希表): 
+   - 使用场景:
+     - 用户标签: sadd + sinter
+     - 生成随机数: spop/ srandmember 
+
+7. 有序集合:
+
+   每个元素有一个 score 作为排序的依据
+
+   - zadd key score value:
+   - zscore key member: 获得成员分数
+   - zrank key member: 计算成员排序
+   - zrange key start en: 返回指定范围的成员
+   - 数据结构实现:
+     - ziplist(压缩列表): 元素个数小于等于128, 元素值小于等于 64
+     - skiplist(跳表): 
+   - 使用场景: 排行榜系统, 例如根据点赞个数来排名
+
+8. 优化执行操作:
+
+   - 管道技术: 将多个命令组合, 通过一次请求发送给服务器, 然后将执行结果按顺序返回给客户端. 管道命令和原生批处理命令的区别在于原生批处理命令是原子性的.
+   - 事务功能:
+     - mult, exec, discard, Redis 事务不支持回滚功能, 使用 watch 命令来判断在事务执行之前没有被其它事务修改.
+     - eval 命令执行 Lua 脚本来实现事务的功能
+
+9. 参考:
+
+   [1] : [Redis分布式锁的正确实现方式（Java版）](<https://wudashan.cn/2017/10/23/Redis-Distributed-Lock-Implement/>)
+
+------
+
+#### MQ:
+
+1. RabbitMQ 使用场景:
+   - 抢购活动, 削峰填谷, 防止系统崩塌
+   - 延迟消息处理
+   - 解耦系统
+2. RabbitMQ 重要角色:
+   - 生产者: 消息的创建者, 负责创建和推送数据的到消息服务器
+   - 消费者: 消息的接收方, 用于处理数据和确认消息
+   - 服务器: 就是 RabbitMQ 本身
+3. RabbitMQ 重要组件:
+   - ConnectionFactory(连接管理器): 应用程序与 Rabbit 之间建立的管理器.
+   - Channel(信道): 消息推送使用的通道.
+   - Exchange(交换器): 用于接受, 分配消息.
+   - Queue(队列): 用于存储生产者的消息.
+   - RoutingKey(路由键): 用于把生产者的数据分配到交换器上.
+   - BindingKey(绑定键): 用于把交换器的消息绑定到队列上.
+4. 交换器类型:
+   - fanout: 它会把所有发送到该交换器的消息路由到所有与该交换器绑定的队列中
+   - direct: 它把消息路由到那些 BindKey 和 RoutingKey 完全匹配的队列中
+   - topic:  它可以采用通配符的方式来匹配.
+   - headers: 根据发送消息的 headers 属性进行匹配.
+
+------
+
+#### 设计模式
+
+1. 设计模式原则:
+
+   - 开闭原则(Open-closed Principle): Software entities like classes, modules, and functions should be open for extension but closed for modifications(尽量通过扩展软件实体的行为来实现变化, 而不是 通过修改已有的代码来完成变化).
+
+   - 变化类型:
+
+     - 逻辑变化:
+
+       只变化一个逻辑, 而不涉及其它模块.
+
+     - 子模块变化:
+
+       底层模块变化引起高层模块变化. 因此在通过扩展完成变化时, 高层次的修改是必然的.
+
+     - 可见视图变化:
+
+       
+
+     ```java
+     public interface IBook {
+         String getName();
+         int getPrice();
+         String getAuthor();
+     }
+     
+     public class NovelBook implements IBook {
+         private String name;
+         private int price;
+         private String author;
+         
+         public NoveBook(String name, int price, String author) {
+             this.name = name;
+             this.price = price;
+             this.author = author;
+         }
+         
+         public String getAuthor() {
+             return this.author;
+         }
+         
+         public String getName() {
+             return this.name;
+         }
+         
+         public int getPrice() {
+             return this.price;
+         }
+     }
+     
+     public class BookStore {
+         private final static List<IBook> books = new ArrayList<>();
+         static {
+             books.add(new NovelBook("testName1", 100, "testAuthor1"));
+             books.add(new NovelBook("testName2", 101, "testAuthor2"));
+         }
+         
+         public static void main(String[] args) {
+             for (IBook book : books) {
+                 System.out.println(book);
+             }
+         }
+     }
+     ```
+
+     现在需要进行打折销售, 解决方法:
+
+     - 修改接口
+
+       在 `IBook` 上增加一个 `getOffPrice()`, 这样实现类 `NovelBook` 要进行修改, `BookStore` 也需要进行修改. `IBook` 作为接口应该是稳定可靠的, 不应该经常性的变动.
+
+     - 修改实现类
+
+       修改 `NovelBook` 类中的方法, 直接在 `getPrice()` 方法中实现, 然后通过替换 class 文件进行功能的改进. 
+
+     - 通过扩展实现变化
+
+       增加一个子类 `OffNovelBook` 覆写 `getPrince()` 方法, 高层次模块通过 `OffNovelBook` 类产生新的对象.
+
+       ```java
+       public class OffNovelBook extends NovelBook {
+           public OffNovelBook(String name, int price, String author) {
+               super(name, price, author);
+           }
+           
+           @Override
+           public int getPrice() {
+               int selfPrice = super.getPrice();
+               int offPrice = 0;
+               if (selfPrice > 4000) {
+                   offPrice = selfPrice * 90 / 100;
+               } else {
+                   offPrice = selfPrice * 80 / 100;
+               }
+               return offPrice;
+           }
+       }
+       
+       public class BookStore {
+           private final static List<IBook> books = new ArrayList<>();
+           static {
+               books.add(new OffNovelBook("testName1", 100, "testAuthor1"));
+               books.add(new OffNovelBook("testName2", 101, "testAuthor2"));
+           }
+           
+           public static void main(String[] args) {
+               for (IBook book : books) {
+                   System.out.println(book);
+               }
+           }
+       }
+       ```
+
+       
+
+   - 单一职责原则(Single Responsibility Principle): There should never be more than one reason for a class to change (有且仅有一个原因引起类的变化).
+
+   - 里氏替换原则: Functions that use pointers or references to base  classes must be able to use objects of derived classes without knowing it(所有引用基类的地方必须能够透明地使用其子类的对象).
+
+     - 子类必须完全实现父类的方法
+     - 子类可以有自己的个性
+     - 覆盖或实现父类的方法时输入参数可以被放大
+     - 覆盖或实现父类的方法时输出结果可以被缩小
+
+   - 依赖倒置原则(Dependence Inversion Principle): High level modules should not depend upon low level modules. Both should depend upon abstractions. Abstractions should not depend upon details. Details should not depend upon abstractions.
+
+     - 模块之间的依赖是通过抽象发生, 实现类之间不发生直接的依赖关系, 其依赖关系是通过接口或抽象类产生的.
+     - 接口或抽象类不依赖于实现类.
+     - 实现类依赖接口或抽象类.
+
+   - 接口隔离原则: Clients should not be foreced to depend upon interfaces that they don't use(客户端不应该依赖它不需要的接口); The dependency of one class to another one should depend on the smallest possible interface(类间的依赖关系应该建立在最小的接口上).
+
+     提供给每个模块的都应该是单一的接口, 而不是建立一个庞大的臃肿的接口, 容纳客户端的访问. 将一个臃肿的接口变更为两个独立的接口就是接口隔离原则.
+
+   - 迪米特法则(最少知识原则):  Only talk to your immediate friends(只与最直接的朋友通信).
+
+     朋友类的定义: 出现在成员变量, 方法的输入输出参数中的类称为成员朋友类, 而出现在方法内部的类不属于朋友类.
+
+     ```java
+     public class Teacher {
+         // 既然老师已经将点名的事情交给 GroupLeader 去做了, 那么老师就不需要知道 Girl 了
+         public void command(GroupLeader groupLeader) {
+             List<Girl> girls = new ArrayList<>();
+             for (int i = 0; i < 20; i++) {
+                 girls.add(new Girl());
+             }
+             groupLeader.countGirls(girls);
+         }
+     }
+     
+     public class GroupLeader {
+         public void countGirls(List<Girl> girls) {
+             System.out.println(girls.size());
+         }
+     }
+     
+     public class Client {
+         public static void main(String[] args) {
+             Teacher teacher = new Teacher();
+             teacher.command(new GroupLeader());
+         }
+     }
+     
+     public class Teacher {
+         // 既然老师已经将点名的事情交给 GroupLeader 去做了, 那么老师就不需要知道 Girl 了
+         public void command(GroupLeader groupLeader) {
+             groupLeader.countGirls();
+         }
+     }
+     
+     public class GroupLeader {
+         private List<Girl> girls;
+         
+         public GroupLeader(List<Girl> girls) {
+             this.girls = girls;
+         }
+         
+         public void countGirls(List<Girl> girls) {
+             System.out.println(this.girls.size());
+         }
+     }
+     
+     public class Client {
+         public static void main(String[] args) {
+             List<Girl> girls = new ArrayList<>();
+             for (int i = 0; i <= 20; i++) {
+                 girls.add(new Girl());
+             }
+             Teacher teacher = new Teacher();
+             teacher.command(new GroupLeader());
+         }
+     }
+     ```
+
+     

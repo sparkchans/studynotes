@@ -8,13 +8,13 @@
             System.out.println("SuperClass Initial");
         }
     }
-
+   
     public class SubClass {
         static {
             System.out.println("SubClass Initial");
         }
     }
-
+   
     public class NotInitialization {
         public static void main(String[] args) {
             // 输出为 SuperClass Initial
@@ -31,7 +31,7 @@
             SuperClass[] sca = new SuperClass[10];
         }
     }
-
+   
     ```
     * 直接引用常量:
     ```Java
@@ -41,7 +41,7 @@
             System.out.println("ConstClass Initial");
         }
     }
-
+   
     public class NotInitialization {
         public static void main(String[] args) {
             // 不会输出任何值
@@ -66,4 +66,4 @@
     }
     ```
 2. **参考:**  
-[1] : [深入理解Java虚拟机（第2版）](https://book.douban.com/subject/24722612/)   
+  [1] : [深入理解Java虚拟机（第2版）](https://book.douban.com/subject/24722612/)   

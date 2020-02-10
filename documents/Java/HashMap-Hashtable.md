@@ -44,7 +44,10 @@
         // HashMap 内部的 hash 函数
         static final int hash(Object key) {
             int h;
-            // 若 key 为 null 则 hashCode 值为 0
+            /** 
+             * 若 key 为 null 则 hashCode 值为 0, 将哈希值右移 16 位与自己进行异或
+             * 让高位也可以参与运算
+             */
             return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
         }
         
@@ -110,9 +113,9 @@
         ```
 
     - 底层实现:
-    
+
         两者都是通过***除留余数法***来进行 hash 值的散列, 并通过***链地址法***解决冲突.  当 `HashMap` 的链表长度大于默认的阈值 8 时, 会将链表转换成红黑树, 以提高查找效率.
-    
+
         ```java
         final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
             // 省略其它代码
@@ -132,7 +135,7 @@
             // 省略其它代码
         }
         ```
-    
+
 3. 特点:
 
     - 判断对象相等的标准:
@@ -143,4 +146,76 @@
 
         两者都可以通过 `entrySet()` 方法返回一个内部数据的 `Set`, 这和 `Arrays#asList()` 方法返回一个数组的 `List` 视图类似.
 
-        
+4. 相关代码实现:
+
+    - HashMap
+
+      ```java
+      /**********************************HashMap*********************************/
+      // LinkedHashMap 的回调
+      void afterNodeAccess(Node<K,V> p) { }
+      void afterNodeInsertion(boolean evict) { }
+      void afterNodeRemoval(Node<K,V> p) { }
+      
+      // 存放元素
+      final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+                         boolean evict) {
+          Node<K,V>[] tab; Node<K,V> p; int n, i;
+          if ((tab = table) == null || (n = tab.length) == 0)
+              n = (tab = resize()).length;
+          // 对应位置没有元素则直接存放
+          if ((p = tab[i = (n - 1) & hash]) == null)
+              // 新建结点
+              tab[i] = newNode(hash, key, value, null);
+          else {
+              Node<K,V> e; K k;
+              if (p.hash == hash &&
+                  // 对应位置存在一个元素, 且元素的键的值等于当前元素
+                  ((k = p.key) == key || (key != null && key.equals(k))))
+                  e = p;
+              else if (p instanceof TreeNode)
+                  // 如果是结点类型为树的结点类型, 则将调用树的存放方法
+                  e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+              else {
+                  for (int binCount = 0; ; ++binCount) {
+                      if ((e = p.next) == null) {
+                          p.next = newNode(hash, key, value, null);
+                          if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                              treeifyBin(tab, hash);
+                          break;
+                      }
+                      if (e.hash == hash &&
+                          ((k = e.key) == key || (key != null && key.equals(k))))
+                          break;
+                      p = e;
+                  }
+              }
+              if (e != null) { // existing mapping for key
+                  V oldValue = e.value;
+                  if (!onlyIfAbsent || oldValue == null)
+                      e.value = value;
+                  // 元素访问之后回调
+                  afterNodeAccess(e);
+                  return oldValue;
+              }
+          }
+          ++modCount;
+          if (++size > threshold)
+              resize();
+          // 元素插入之后回调
+          afterNodeInsertion(evict);
+          return null;
+      }
+      // 新建结点
+      Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
+          return new Node<>(hash, key, value, next);
+      }
+      /******************************LinkedHashMap**********************************/
+      ```
+
+5. 自己实现 Object 对象作为键:
+
+    - 重写 `hashCode()` :  通过该方法返回哈希值
+    - 重写 `equals()`： 需要遵守自反性、对称性、传递性、一致性以及对于任何非null的引用值x，x.equals(null)必须返回false的这几个特性，**目的是为了保证key在哈希表中的唯一性**
+
+    
