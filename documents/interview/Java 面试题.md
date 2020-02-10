@@ -12,13 +12,13 @@ NIO 网络编程:
 
       应用调用 `recvfrom` 系统调用, 当前线程被阻塞, 当数据到达并由内核地址空间复制到用户地址空间后, 返回应用线程.
 
-      ![](./asserts/blocking io.png)
+      ![](./asserts/blocking-io.png)
 
     - 非阻塞 IO (nonblocking I/O):
 
       应用循环去调用 `recvfrom` 系统调用, 该系统调用不阻塞当前应用线程, 若数据没有准备好, 则返回错误; 否则将数据由系统内核地址空间复制到用户地址空间, 然后返回.
 
-      ![](./asserts/non-blocking io.png)
+      ![](./asserts/non-blocking-io.png)
 
     - IO 多路复用(I/O multiplexing):
 
