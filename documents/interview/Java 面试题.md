@@ -12,25 +12,25 @@ NIO 网络编程:
 
       应用调用 `recvfrom` 系统调用, 当前线程被阻塞, 当数据到达并由内核地址空间复制到用户地址空间后, 返回应用线程.
 
-      ![](.\asserts\blocking io.png)
+      ![](./asserts/blocking io.png)
 
     - 非阻塞 IO (nonblocking I/O):
 
       应用循环去调用 `recvfrom` 系统调用, 该系统调用不阻塞当前应用线程, 若数据没有准备好, 则返回错误; 否则将数据由系统内核地址空间复制到用户地址空间, 然后返回.
 
-      ![](.\asserts\non-blocking io.png)
+      ![](./asserts/non-blocking io.png)
 
     - IO 多路复用(I/O multiplexing):
 
       应用调用 `select` 系统调用, 系统阻塞, 当监听的一个或多个 `Socket` 有数据到来时, 返回到应用, 应用然后调用 `recvfrom` 系统调用, 数据从内核地址空间复制到用户地址空间, 然后返回.
 
-      ![](.\asserts\select.png)
+      ![](./asserts/select.png)
 
     - 信号驱动 IO(signal driven I/O):
 
     - 异步 I/O(asynchronous I/O): 
 
-      ![](.\asserts\aio.png)
+      ![](./asserts/aio.png)
 
 3. 访问文件的方式:
 
