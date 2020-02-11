@@ -1,4 +1,16 @@
-NIO 网络编程:
+#### 面试题库资源:
+
+[1] : [Java 最常见 200+ 面试题全解析：面试必备（附答案） - Java技术干货 - SegmentFault 思否](https://segmentfault.com/a/1190000019836576)
+
+[2] : [JavaGuide](https://github.com/Snailclimb/JavaGuide)
+
+[3] : [Java知识学习总结+源码阅读笔记](<https://github.com/javagrowing/interview-docs>)
+
+[3] : [芋道源码](<http://svip.iocoder.cn/tags/%E9%9D%A2%E8%AF%95%E9%A2%98/>)
+
+------
+
+#### NIO 网络编程:
 
 1. Java IO 操作类型:
 
@@ -228,7 +240,7 @@ NIO 网络编程:
 
     - 实现 Callable 接口
 
-        `Callable` 的 `call()` 方法可以有返回值并且可以声明抛出异常. Java 提供 `FutureTask` 利用适配器模式将 `Callable` 的 `call()` 方法适配为 `Runnable` 的 `run()` 方法.  `FutureTask` 一次只能被一个线程执行, 若没能获取到则直接返回, 不会执行 `call()` 方法.
+        `Callable` 的 `call()` 方法可以有返回值并且可以声明抛出异常. Java 提供 `FutureTask` 利用适配器模式将 `Callable` 的 `call()` 方法适配为 `Runnable` 的 `run()` 方法.  `FutureTask` 一次只能被一个线程执行, 它有一个 `state` 状态标志它是否被执行, 线程执行的结果可以通过 `FutureTask#get()` 方法获取.
 
 4. runnable 和 callable 的区别:
 
@@ -1126,19 +1138,85 @@ NIO 网络编程:
 
 1. 架构:
    - 客户端
+
    - Server:
      - 连接器
      - 分析器
      - 优化器
      - 执行器
-   - 存储引擎:
+
+   - 存储引擎
+
+     存储引擎:
+
+     - InnoDB
+
+       每一张 InnoDB 表都会有一个主键索引(聚集索引), 用于加快查询; 创建表会产生两个文件: .frm(存储数据)和 .ibd(存储索引); 默认的事务隔离级别为重复读(Repeatable Read);
+
+       - 支持事务
+       - 支持表锁和行锁
+       - 支持外键
+
+     - MyISAM
+
+       每一张 MyISAM 表都会有两个文件 .myd(储存数据) 和 .myi(存储索引)
+
+       - 支持全文索引
+
+         ```sql
+         create table test (
+             id int(11) unsigned not null auto_increment,
+             content text not null,
+             primary key(id),
+             fulltext key content_index(content)
+         ) engine=MyISAM default charset=utf8;
+         
+         insert into test (content) values ('a'),('b'),('c');
+         insert into test (content) values ('aa'),('bb'),('cc');
+         insert into test (content) values ('aaa'),('bbb'),('ccc');
+         insert into test (content) values ('aaaa'),('bbbb'),('cccc');
+         select * from test where match(content) against('aaaa');
+         ```
+
+       - 支持表锁
+
+         读取数据时获取表级的共享锁; 写数据时获取表级的排它锁.
+
+       - 延迟键写
+
+         更改的索引数据不会立即写入磁盘, 而是缓存在内存中
+
+       - 表的压缩
+
+         能够将表进行压缩以占用较少的空间, 支持索引, 但是数据为只读的
+
+       
+
+   ![](./asserts/mysql-architecture.png)
 
 2. 数据库三泛式
-   - 第一范式(属性的原子性): 强调列的原子性, 即数据库表的每一列都是不可分割的原子数据项.
-   - 第二范式(记录的唯一性): 实体的属性完全依赖于主关键字.
-   - 第三范式(字段的冗余性): 任何非主属性不依赖于其它非主属性.
+   - 第一范式(属性的原子性): 实体的每个属性都是不可分割的原子数据项.
 
-3. 类型区别:
+     例如地址可以再进行拆分为省, 市, 区, 街道, 门牌号.
+
+   - 第二范式(是对记录的惟一性约束，要求记录有惟一标识，即实体的惟一性，更通俗说有主键ID): 实体的属性完全依赖于主关键字.
+
+   - 第三范式(是对字段冗余性的约束，即任何字段不能由其他字段派生出来，它要求字段没有冗余): 任何非主属性不依赖于其它非主属性. 一般为了加快查询速度会适当冗余字段, 这时会违背第三范式原则.
+
+3. 事务实现原理:
+
+   - 日志: 二进制日志(服务层), 回滚日志(存储引擎层), 重做日志(存储引擎层)
+   - 原子性: 回滚日志
+   - 一致性: 重做日志
+
+4. 隔离的四个级别：
+
+   - 脏读(Read Uncommitted):
+   - 读提交(Read Committed): 解决脏读
+   - 重复读(Repeatable Read): 解决重复读
+   - 序列化(Serializable): 解决幻读
+
+5. 类型区别:
 
    - char 和 varchar 区别:
      - char: 固定长度类型. 效率高但是占用空间(最大长度255), 会去掉尾部多余的空格
@@ -1186,36 +1264,131 @@ NIO 网络编程:
        RENAME TABLE my_summary TO my_summary_old, my_summary_new TO my_summary -- 该操作为原子操作
        ```
 
-        
+6. MySQL 行锁和表锁:
+   - 表级锁: 开销小, 加锁快, 不会出现死锁. 锁定粒度大,  发生锁冲突概率高, 并发量最低(解决幻读).
+   - 行级锁: 开销小, 加锁慢, 会出现死锁. 锁粒度小, 发生锁冲突概率低, 并发度最高(解决重复读).
 
-4. MySQL 行锁和表锁:
-   - 表级锁: 开销小, 加锁快, 不会出现死锁. 锁定粒度大,  发生锁冲突概率高, 并发量最低.
-   - 行级锁: 开销小, 加锁慢, 会出现死锁. 锁粒度小, 发生锁冲突概率低, 并发度最高.
+7. 数据库优化措施:
 
-5. 表设计原则:
+   - 表设计优化:
 
-   - 使用较小的数据类型:
-   - 使用 MySQL 自带的日期类型存储日期, 使用整型存储 IP 地址.
-   - 尽可能避免使用 NULL 的列: 一个可以为空的列会使用更多的存储空间并要求特殊的处理.
-   - 选择正确的数据类型: 
+     - 使用较小的数据类型:
 
-6. 索引:
+       - 使用 MySQL 自带的日期类型存储日期, 使用整型存储 IP 地址.
 
-   - 索引匹配:
+     - 尽可能避免使用 NULL 的列: 一个可以为空的列会使用更多的存储空间并要求特殊的处理.
+
+     - 选择正确的数据类型
+
+     - 表数据做逻辑删除而不作物理删除:
+
+       - 可恢复，物理删除一旦删除，即不可恢复。
+
+       - 逻辑删除数据可用数据分析等
+
+         ```sql
+         deleted tinyint not null default 1;
+         ```
+
+     - 表必须字段: id, created_time, updated_time
+
+       ```sql
+       id bigint(20) unsigned not null primary key auto_increment;
+       created_time timestamp not null default now();
+       updated_time timestamp not null default now() comment ''
+       ```
+
+   - 查询优化:
+
+     - 使用缓存: ORM 框架层缓存, Redis 缓存等
+
+     - 采用读写分离的措施:
+
+     - 垂直拆分
+
+       - 垂直分表
+
+         也就是“大表拆小表”，基于列字段进行的。一般是表中的字段较多，将不常用的， 数据较大，长度较长（比如text类型字段）的拆分到“扩展表“。 一般是针对那种几百列的大表，也避免查询时，数据量太大造成的“跨页”问题(垂直的原因就类似于用刀将表的列切分为不同的部分).
+
+       - 垂直分库
+
+         垂直分库针对的是一个系统中的不同业务进行拆分，比如用户User一个库，商品Producet一个库，订单Order一个库。 切分后，要放在多个服务器上，而不是一个服务器上.
+
+     - 水平拆分
+
+       - 水平分表
+
+         针对数据量巨大的单张表（比如订单表），按照某种规则（RANGE,HASH取模等），切分到多张表里面去
+
+       - 水平分库分表
+
+         将单张表的数据切分到多个服务器上去，每个服务器具有相应的库与表，只是表中数据集合不同。 水平分库分表能够有效的缓解单机和单库的性能瓶颈和压力，突破IO、连接数、硬件资源等的瓶颈.
+
+       - 拆分原则:
+
+         - RANGE
+
+           从0到10000一个表，10001到20000一个表
+
+         - HASH 取模
+
+           一个商场系统，一般都是将用户，订单作为主表，然后将和它们相关的作为附表，这样不会造成跨库事务之类的问题。 取用户id，然后hash取模，分配到不同的数据库上。
+
+         - 地理区域
+
+           比如按照华东，华南，华北这样来区分业务，七牛云应该就是如此。
+
+         - 时间
+
+           按照时间切分，就是将6个月前，甚至一年前的数据切出去放到另外的一张表，因为随着时间流逝，这些表的数据 被查询的概率变小，所以没必要和“热数据”放在一起，这个也是“冷热数据分离”.
+
+     - 查询优化
+
+       - 定位慢查询. 
+
+8. 索引:
+
+   - 类型:
+     - 按数据结构实现: Hash 索引, B+ 树索引, 全文索引
+     - 按是否是主键索引: 聚集索引(Clustered Index), 二级索引(Secondery Index, 二级的原因是该索引会保留对应行的主键, 然后根据主键再去聚集索引中找到指向实际数据的指针, 因此称为二级索引)
+     - 按查询数据: 覆盖索引(Covering Index, 覆盖的意思是覆盖了插叙所需要的数据, 因此不需要从磁盘中去读取行的数据了)
+     - 按建立索引的列: 单列索引, 多列索引
+
+   - 索引匹配: 最左匹配原则
 
      - 全部匹配
      - 匹配部分列
      - 匹配某列的部分
      - 匹配某列全部, 再匹配某列部分
 
-   - 索引按数据结构分类:
+   - 索引提高查询速度原理:
 
-     - B-Tree 索引:
-     - Hash 索引:
+     - 减少服务器访问数据的数量
+     - 避免排序和使用临时表
+     - 将随机 IO 转化为线性 IO 
+
+   - 执行计划分析:(参见 MySQL 手册第 8.8.2)
+
+     ```sql
+     -- actor_id 和 film_id 上有索引
+     EXPLAIN SELECT fild_id, actor_id
+               FROM film_actor
+              WHERE actor_id = 1
+                 OR film_id = 1
+     ```
+
+     在执行计划结果中的 `type` 类型为 `index_merge`,  `Extra` 字段会有 `Using union(PRIMARY, idx_fk_film_id); Using where`.  MySql 采用每个索引对表进行扫描, 然后将两个结果合并在一起.
+
+     - 若 `Extra` 结果为 `Using intersect(idx_age,idx_name); Using where; Using index`, 则表明 `age` 和 `name` 需要一个联合的索引
+     - 若 `Extra` 结果为 `Using union(idx_name,idx_age); Using where`, 则需要注意每个索引具有较高的选择性.
+     - 若 `Extra` 结果为 `Using Index` 表明 MySQL 直接使用索引获取数据, 而不需要读取行数据.
 
    - 使用索引策略:
 
-     非主键索引的叶子节点包含有该行数据的主键, 然后再根据主键去查询对应的列
+     * 行的访问类型: `EXPLAN` 输出中的 type 列, 包括: 全表扫描, 索引所描, 范围扫描,  唯一主键查询, 常量查询. 在 `EXPLAN`  中的 extra 列为 where 表明存储引擎层读取所有行数据, 然后将行数据返回给服务层, 然后服务层根据 where 条件将不需要的数据过滤掉. MySQL 使用 where 条件的三种方式:
+       * 索引下沉: 在索引查找阶段使用 where 条件过滤不需要的数据. 发生在存储引擎层.
+       * 在覆盖索引数据查询中使用 where 条件过滤索引中保存的数据而不需要去读取行数据. 发生在服务器层(Using index in extra column).
+       * 从磁盘读取行数据后, 然后使用 where 条件过滤数据. 发生在服务层(Using where in extra column).
 
      - 查询的时的索引列不能是表达式的一部分或者在函数里面
 
@@ -1286,154 +1459,147 @@ NIO 网络编程:
                        ON profiles.id = x.id
        ```
 
+   - JOIN 优化
+
+     MySQL 会优化访问 `JOIN` 表的顺序, 也就是说写在前面的表不一定被先访问. 在 `JOIN` 操作后的 `ORDER BY` 的时候如果字段是第一个被访问的表的字段, MySQL 可以先将该表 filesort, 然后再进行 `JOIN` 操作, 得到的结果就已经是排好序的了, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using Index`; 相反如果排序的字段不是第一个被访问的表的字段, 那么就需要对 join 后的结果进行排序, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using index; Using temporary; Using filesort`
+
+   - COUNT() 优化
+
+     COUNT(*) 不带 WHERE 条件非常快, 因为存储引擎知道一张表里面有多少行数据.	
+
+     ```sql
+     -----------优化案例1------------
+     -- 该查询会扫描很多行的数据
+     SELECT COUNT(*)
+       FROM City
+      WHERE ID > 5;
+      -- 优化之后只需要扫描 5 行数据
+      SELECT (SELECT COUNT(*) FROM City) - COUNT(*)
+        FROM City 
+       WHERE ID <= 5; -- 子查询是一个常量
        
+     -------------------优化案例2---------------
+     SELECT SUM(IF(color = 'blue', 1, 0)) AS 'blue'
+     	   SUM(IF(color = 'red', 1, 0)) AS 'red'
+       FROM items;
+     -- 优化方式 1
+     SELECT SUM(color = 'blue') AS 'blue'
+     	   SUM(color = 'red') AS 'red'
+       FROM items;
+       -- 优化方式 1
+     SELECT COUNT(color = 'blue' OR NULL) AS 'blue'
+            COUNT(color = 'red' OR NULL) AS 'red'
+       FROM items;   
+     ```
 
-   - 聚集索引: 数据实际的存放顺序和索引的顺序相同
+   - GROUP BY 优化
 
-     - 不要使用 UUID 作为主键,
+     ```sql
+     SELECT actor.first_name, actor.last_name, COUNT(*)
+       FROM film_actor
+            INNER JOIN actor USING(actor_id)
+      GROUP BY actor.first_name, actor.last_name
+      --前提条件是 actor.first_name, actor.last_name 唯一对应一个 id
+      SELECT actor.first_name, actor.last_name, COUNT(*)
+       FROM film_actor
+            INNER JOIN actor USING(actor_id)
+      GROUP BY actor.actor_id
+     ```
 
-7. 获取版本:
+9. 常用命令
 
-   - `select version()`
+   - 获取版本
 
-8. 存储引擎:
+     ```sql
+     select version();
+     ```
 
-   - InnoDB: 每一张 InnoDB 表都会有一个主键索引(聚集索引), 用于加快查询. 创建表会产生两个文件: .frm 和 .ibd
-     - 支持事务
-     - 支持表锁和行锁
-     - 支持外键
+   - 查看表结构
 
-9. 事务实现原理:
+     ```sql
+     describe tableName
+     ```
 
-   - 日志: 二进制日志(服务层), 回滚日志(存储引擎层), 重做日志(存储引擎层)
+   - 查看创建表的脚本
 
-   - 原子性: 回滚日志
-   - 一致性: 重做日志
+     ```sql
+     -- 该脚本可以查看创建表时的默认选项
+     show create table tableName
+     ```
 
-10. 隔离的四个级别：
+   - 查看存储过程
 
-   - 脏读(Read Uncommitted):
-   - 读提交(Read Committed): 解决脏读
-   - 重复读(Repeatable Read): 解决重复读
-   - 序列化(Serializable): 解决幻读
+     ```sql
+     SHOW PROCEDURE STATUS 
+              WHERE db = 'high_performance_mysql';
+     
+     SELECT `name` 
+       FROM mysql.proc 
+      WHERE db = 'high_performance_mysql' 
+        AND `type` = 'PROCEDURE'
+     ```
 
-11. 查询优化:
+   - 查看执行时间
 
-    - 行的访问类型: `EXPLAN` 输出中的 type 列, 包括: 全表扫描, 索引所描, 范围扫描,  唯一主键查询, 常量查询. 在 `EXPLAN`  中的 extra 列为 where 表明存储引擎层读取所有行数据, 然后将行数据返回给服务层, 然后服务层根据 where 条件将不需要的数据过滤掉. MySQL 使用 where 条件的三种方式:
+     ```sql
+     SET profiling=1
+     -- 需要开启
+     SHOW PROFILES;
+     -- 查询单个语句执行
+     SHOW PROFILE FOR QUERY 1;
+     ```
 
-      - 索引下沉: 在索引查找阶段使用 where 条件过滤不需要的数据. 发生在存储引擎层.
-      - 在覆盖索引数据查询中使用 where 条件过滤索引中保存的数据而不需要去读取行数据. 发生在服务器层(Using index in extra column).
-      - 从磁盘读取行数据后, 然后使用 where 条件过滤数据. 发生在服务层(Using where in extra column).
+   - 查看连接数
 
-    - 优化:
+     ```sql
+     SHOW PROCESSLIST;
+     ```
 
-      - count() 优化: 
+10. 参考:
 
-        ```sql
-        -- 优化 1
-        SELECT COUNT(*)
-          FROM City
-         WHERE ID > 5;
-         -- 优化
-         SELECT (SELECT COUNT(*) FROM City) - COUNT(*)
-           FROM City 
-          WHERE ID <= 5; -- 子查询是一个常量
-        -- 优化 2
-        SELECT SUM(IF(color = 'blue', 1, 0)) AS 'blue'
-        	   SUM(IF(color = 'red', 1, 0)) AS 'red'
-          FROM items;
-          -- 优化
-          SELECT SUM(color = 'blue') AS 'blue'
-        	     SUM(color = 'red') AS 'red'
-            FROM items;
-          
-          SELECT COUNT(color = 'blue' OR NULL) AS 'blue'
-                 COUNT(color = 'red' OR NULL) AS 'red'
-            FROM items;     
-        ```
+   [1] : [MySQL到底有多少种日志类型需要我们记住的！](<https://database.51cto.com/art/201806/576300.htm>)
 
-        
+   [2] : [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
 
-      - join 优化:
+   [3] : [Function of deferred join in MySQL](https://stackoverflow.com/questions/31555154/function-of-deferred-join-in-mysql)
 
-        - 在 ON 的列上使用索引
+   [4] : [b树和b+树的区别](<https://blog.csdn.net/login_sonata/article/details/75268075>)
 
-        - 只需要在 JOIN 顺序的第二个表上建立索引
+   [5] : [数据库三范式详解](<https://cloud.tencent.com/developer/article/1093313>)
 
-        - GROUP BY 或 ORDER BY 引用单个表中的列
+   [6] : [如何理解关系型数据库的常见设计范式？](<https://www.zhihu.com/question/24696366>)
 
-          ```sql
-          SELECT actor.first_name, actor.last_name, COUNT(*)
-            FROM film_actor
-                 INNER JOIN actor USING(actor_id)
-           GROUP BY actor.first_name, actor.last_name;
-           -- 优化
-           SELECT actor.first_name, actor.last_name, COUNT(*)
-            FROM film_actor
-                 INNER JOIN actor USING(actor_id)
-           GROUP BY actor.actor_id;
-           SELECT actor.first_name, actor.last_name
-             FROM actor
-                  INNER JOIN (
-                  	SELECT actor_id, COUNT(*) AS count
-                        FROM film_actor
-                       GROUP BY actor_d
-                  ) AS c USING(actor_id); -- 子查询产生的表是没有索引的
-          ```
+   [7] : [10分钟了解读写分离的作用](<https://blog.csdn.net/u013421629/article/details/78793966>)
 
-    ```sql
-    SELECT COUNT(*) FROM tbl_name
-    SELECT MIN(key_part1), MAX(key_part1) FROM tbl_name
-    SELECT MAX(key_part2) FROM tbl_name WHERE key_part1 = constant
-    SELECT ... FROM tbl_name ORDER BY key_part1, key_part2 LIMIT 10;
-    SELECT ... FROM tbl_name ORDER BY key_part1 DESC, key_part2 DEORSC LIMIT 10;
-    -- 下面查询只会访问索引树, 假设索引列为数字
-    SELECT key_part1, key_part2 FROM tbl_name WHERE key_part1 = val;
-    SELECT COUNT(*) FROM tbl_name WHERE key_part1 = val1 AND key_part = val2
-    SELECT key_part2 FROM tbl_name GROUP BY key_part1;
-    -- 下面查询使用索引对数据进行排序, 不必单独做一次排序
-    SELECT ... FROM tbl_name ORDER BY key_part1, key_part2
-    SELECT ... FROM tbl_name ORDER BY key_part1 DESC, key_part2 DESC;
-    -- 范围查询
-    SELECT * FROM t1 WHERE key_col > 1 AND key_col < 10
-    SELECT * FROM t1 WHERE key_col = 1 OR key_col IN (15, 18, 20)
-    SELECT * FROM t1 WHERE key_col LIKE 'ab%' OR key_col BETWEEN 'bar' AND 'foo'
-    ```
+   [8] : [MySQL 读写分离](<https://blog.csdn.net/justdb/article/details/17331569>)
 
-    
+   [9] : [彻底搞清分库分表（垂直分库，垂直分表，水平分库，水平分表）](<https://zhuanlan.zhihu.com/p/98392844>)
 
-12. 性能监控:
+   [10] : [分布式事务](<https://juejin.im/post/5b5a0bf9f265da0f6523913b>)
 
-    - 查看执行过程占用时间:
-      - set profiling=1;
-      - show profiles;
-      - show profile for query 1;
-      - show processlist;
-      - show variables like "%max_connections%";
-    - 主键:
-      - 代理主键
-      - 自然主键
-    - 编码:
-      - utf8mb4
-    - 自增主键:
-      - 索引可维护性
-    - 冷热分离
-    - 索引:
-      - 优点:
-      - 用处:
-      - 分类:
-      - 数据结构:
-      - 匹配方式:
+   [11] : [常用的分布式事务解决方案](<https://juejin.im/post/5aa3c7736fb9a028bb189bca>)
 
-13. 参考:
+   [12] : [MySQL开启慢查询并分析原因](<https://www.jianshu.com/p/38cbb5426bee>)
 
-    [1] : [MySQL到底有多少种日志类型需要我们记住的！](<https://database.51cto.com/art/201806/576300.htm>)
+   [13] : [JDBC实现往MySQL插入百万级数据](https://www.cnblogs.com/fnz0/p/5713102.html)
 
-    [2] : [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
+   [14] : [Efficient way to do batch INSERTS with JDBC](https://stackoverflow.com/questions/3784197/efficient-way-to-do-batch-inserts-with-jdbc)
 
-    [3] : [Function of deferred join in MySQL](https://stackoverflow.com/questions/31555154/function-of-deferred-join-in-mysql)
+   [15] : [b树和b+树的区别](<https://blog.csdn.net/login_sonata/article/details/75268075>)
 
-    [4] : [b树和b+树的区别](<https://blog.csdn.net/login_sonata/article/details/75268075>)
+   [16] : [Differences between B trees and B+ trees](https://stackoverflow.com/questions/870218/differences-between-b-trees-and-b-trees)
+
+   [17] : [平衡二叉树、B树、B+树、B*树 理解其中一种你就都明白了](<https://zhuanlan.zhihu.com/p/27700617>)
+
+   [18] : [为什么MySQL数据库索引选择使用B+树？](<https://blog.csdn.net/xlgen157387/article/details/79450295>)
+
+   [19] : [MySQL索引为什么要用B+树实现？](<https://juejin.im/entry/5bc1ea0a5188255c2f424209>)
+
+   [20] : [MySQL 之全文索引](<https://zhuanlan.zhihu.com/p/35675553>)
+
+   [21] : [MySQL之pt-query-digest分析慢查询日志的详情介绍](<https://www.php.cn/mysql-tutorials-357655.html>)
+
+   [22] : [Centos7下yum安装和使用Percona-toolkit工具](<https://aqzt.com/5366.html>)
 
 ------
 
