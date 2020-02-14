@@ -1,3 +1,5 @@
+
+
 #### 面试题库资源:
 
 [1] : [Java 最常见 200+ 面试题全解析：面试必备（附答案） - Java技术干货 - SegmentFault 思否](https://segmentfault.com/a/1190000019836576)
@@ -7,6 +9,264 @@
 [3] : [Java知识学习总结+源码阅读笔记](<https://github.com/javagrowing/interview-docs>)
 
 [3] : [芋道源码](<http://svip.iocoder.cn/tags/%E9%9D%A2%E8%AF%95%E9%A2%98/>)
+
+[4] : [正则表达式30分钟入门教程](<https://www.jb51.net/tools/zhengze.html#introduction>)
+
+[5] : [2019年最新Java面试题及答案整理](<https://blog.csdn.net/qq_41701956/article/details/86686492>)
+
+[6] : [史上最全阿里 Java 面试题总结](https://segmentfault.com/a/1190000016172470)
+
+------
+
+#### Java 基础
+
+1. 面向对象特征: 封装, 继承, 多态(Java 多态 多态是同一个行为具有多个不同表现形式或形态的能力。 多态就是同一个接口，使用不同的实例而执行不同操作)
+
+2. Java 基本类型:
+
+   - boolean, char, byte, short, int, long, float, double
+
+3. Integer 缓存问题:
+
+   ```java
+   Integer integer1 = 100;
+   // 这里实际上调用的是 Integer#valueOf() 方法
+   Integer integer2 = 100;
+   Integer integer3 = new Integer(100);
+   System.out.println(integer1 == integer2);
+   System.out.println(integer1 == integer3);
+   
+   public static Integer valueOf(int i) {
+       // 这里先从缓存中获取, -128 到 127
+       if (i >= IntegerCache.low && i <= IntegerCache.high)
+           return IntegerCache.cache[i + (-IntegerCache.low)];
+       return new Integer(i);
+   }
+   ```
+
+4. & 和 && 区别:
+
+   前者不短路, 后者短路
+
+5. Math.round(11.5) 等于多少？Math.round(-11.5)等于多少？
+   Math.round(11.5)的返回值是12，Math.round(-11.5)的返回值是-11. 四舍五入的原理是**在参数上加 0.5 然后进行下取整**
+
+6. switch是否能作用在byte上，是否能作用在long上，是否能作用在String上
+
+   byte, short, char, int, Enum, String
+
+7. 重写 equals() 方法的原则:
+
+   equals方法必须满足自反性（x.equals(x)必须返回true）、对称性（x.equals(y)返回true时，y.equals(x)也必须返回true）、传递性（x.equals(y)和y.equals(z)都返回true时，x.equals(z)也必须返回true）和一致性（当x和y引用的对象信息没有被修改时，多次调用x.equals(y)应该得到同样的返回值），而且对于任何非null值的引用x，x.equals(null)必须返回false.
+
+8. Object 类的方法:
+
+   - toString():
+
+     ```java
+     public String toString() {
+         return getClass().getName() + "@" + Integer.toHexString(hashCode());
+     }
+     ```
+
+   - equals(): 默认采用 == 实现
+
+   - getClass(): 获取对象的所属类的 Class 对象, 底层原生实现
+
+   - hashCode(): 底层原生实现
+
+   - clone(): 底层原生实现, 浅克隆, 深度克隆需要自己实现
+
+   - notify():
+
+   - notifyAll()
+
+   - wait()
+
+   - finalize()
+
+9. 重载（Overload）和重写（Override）的区别。重载的方法能否根据返回类型进行区分
+
+   - 方法的重载和重写都是实现多态的方式，区别在于**前者实现的是编译时的多态性**，而后者实现的是**运行时的多态性**。重载发生在一个类中(不一定发生在同一个类中, 子类也可以对父类方法进行重载)，同名的方法如果有不同的参数列表(参数顺序不同, 参数类型不同, 参数个数不同)则视为重载；**重写发生在子类与父类之间**，重写要求子类被重写方法与父类被重写方法有相同的返回类型，比父类被重写方法更好访问，不能比父类被重写方法声明更多的异常（里氏代换原则）。重载对返回类型没有特殊的要求(两同两小一大原则).
+
+10. char 型变量中能不能存贮一个中文汉字
+
+    char类型可以存储一个中文汉字，因为Java中使用的编码是Unicode（不选择任何特定的编码，直接使用字符在字符集中的编号，这是统一的唯一方法），一个char类型占2个字节（16比特），所以放一个中文是没问题的.
+
+    
+
+    使用Unicode意味着**字符在JVM内部和外部有不同的表现形式**，**在JVM内部都是Unicode**，当这个字符被从JVM内部转移到外部时（例如**存入文件系统中**），**需要进行编码转换**。所以Java中有字节流和字符流，以及在字符流和字节流之间进行转换的转换流，如InputStreamReader和OutputStreamReader，这两个类是字节流和字符流之间的适配器类，承担了编码转换的任务；对于C程序员来说，要完成这样的编码转换恐怕要依赖于union（联合体/共用体）共享内存的特征来实现了.
+
+11. 内部类:
+
+    - 静态内部类: 静态内部类可以访问外部类所有的静态变量，而不可访问外部类的非静态变量；静态内部类的创建方式，new 外部类.静态内部类()，如下：
+
+      ```java
+      Outer.StaticInner inner = new Outer.StaticInner();
+      ```
+
+    - 成员内部类: 员内部类可以访问外部类所有的变量和方法，包括静态和非静态，私有和公有。成员内部类依赖于外部类的实例，它的创建方式外部类实例.new 内部类()，如下：
+
+      ```java
+      Outer outer = new Outer();
+      Outer.Inner inner = outer.new Inner();
+      ```
+
+    - 方法(局部)内部类:
+
+    - 匿名内部类: 匿名内部类就是没有名字的内部类
+
+      ```java
+      public class Outer {
+          private void test(final int i) {
+              new Service() {
+                  public void method() {
+                      for (int j = 0; j < i; j++) {
+                          System.out.println("匿名内部类" );
+                      }
+                  }
+              }.method();
+          }
+      }
+      //匿名内部类必须继承或实现一个已有的接口 
+      interface Service{
+          void method();
+      }
+      ```
+
+    - 匿名内部类的 Class 名称为 外部类+$+数字 
+
+    - 匿名内部类必须继承一个抽象类或者实现一个接口.
+
+    - 匿名内部类不能定义任何静态成员和静态方法.
+
+    - 当所在的方法的形参需要被匿名内部类使用时，必须声明为 final(要么声明为 final, 要么不更改它, 否则会报错).
+
+    - 匿名内部类不能是抽象的，它必须要实现继承的类或者实现的接口的所有抽象方法.
+
+    - 内部类 Class 文件命名格式: 外部类的名字+$+内部类的名字
+
+    - 内部类内部会编译生成一个指向外部类的变量 `this$0`, 然后通过构造函数将外部类的对象传递进来
+
+      ```Java
+      class Outer$Inner {
+          private String name;
+      
+          public Outer$Inner(Outer this$0, String name) {
+              this.this$0 = this$0;
+              this.name = name;
+          }
+      }
+      ```
+
+    - 局部内部类和匿名内部类访问局部变量的时候，为什么变量必须要加上final？
+
+      - 其实，如果一个变量的值在编译期间可以确定，则编译器会默认在匿名内部类（局部内部类）的常量池中添加一个内容相等的字面量或直接将相应的字节码嵌入到执行字节码中.
+      - 酱紫可以确保局部内部类使用的变量与外层的局部变量区分开，它们只是值相等而已.
+      - 是因为**生命周期不一致**， 局部变量直接存储在栈中，当方法执行结束后，非final的局部变量就被销毁。而局部内部类对局部变量的引用依然存在，如果局部内部类要调用局部变量时，就会出错。加了final，可以确保局部内部类使用的变量与外层的局部变量区分开，解决了这个问题. 这样也就模拟了方法的值传递.
+      - TODO 参数是如何有一个方法传递到另一个方法的.
+
+    - 经典试题:
+
+      ```java
+      public class Outer {
+          public static void print() {
+              int a = 10;
+              class Inner {
+                  public void print() {
+                      /**
+                       *  如果这里没有用 final 修饰
+                       *  则会生成一个 final int val$a 成员变量
+                       *  该成员变量会在构造函数中进行初始化
+                       *  通过 getfield(获取指定类的实例域, 并将其值压入栈顶)
+                       */
+                      System.out.println(a);
+                  }
+              }
+              a = 20;
+          }
+      }
+      
+      
+      public class Outer {
+          public static void print() {
+              final int a = 10;
+              class Inner {
+                  public void print() {
+                      /** 
+                       * 如果这里用 final 修饰
+                       * bpush 10 这里字节码直接将 10 推送至栈顶
+                       */
+                      System.out.println(a);
+                  }
+              }
+              a = 20;
+          }
+      }
+      
+      
+      public class Outer {
+          private int age = 12;
+      
+          class Inner {
+              private int age = 13;
+              public void print() {
+                  int age = 14;
+                  System.out.println("局部变量：" + age);
+                  System.out.println("内部类变量：" + this.age);
+                  System.out.println("外部类变量：" + Outer.this.age);
+              }
+          }
+      
+          public static void main(String[] args) {
+              Outer.Inner in = new Outer().new Inner();
+              in.print();
+              // 输出 14, 13, 12
+          }
+      
+      }
+      ```
+
+12. String, StringBuilder, StringBuffer 区别
+
+    - String 类是 final 修饰的, 所以 String 是不能被继承的, 非静态的拼接逻辑在JDK 8中会自动被javac转换为StringBuilder操作.
+
+      ```java
+      // 该变量用 final 修饰, 这个才是String不可变的关键点；
+      private final char value[];
+      
+      /** Cache the hash code for the string */
+      private int hash; // Default to 0
+      public int hashCode() {
+          int h = hash;
+          if (h == 0 && value.length > 0) {
+              char val[] = value;
+      
+              for (int i = 0; i < value.length; i++) {
+                  h = 31 * h + val[i];
+              }
+              // 这里对 hashCode() 进行了缓存
+              hash = h;
+          }
+          return h;
+      }
+      ```
+
+    - StringBuilder 
+
+      StringBuilder 继承 AbstractStringBuilder, 默认初始化容量大小为 16
+
+    - StringBuffer 
+
+      StringBuilder 继承 AbstractStringBuilder, 它的每个方法都是采用 `synchronized` 修饰的.
+
+13. 参考:
+
+    [1] : [Java内部类解析你知道多少？](<https://zhuanlan.zhihu.com/p/103258844>)
+
+    [2] : [How do hashCode() and identityHashCode() work at the back end?](https://stackoverflow.com/questions/4930781/how-do-hashcode-and-identityhashcode-work-at-the-back-end)
+
+    [3] : [正则表达式30分钟入门教程](<https://www.jb51.net/tools/zhengze.html>)
 
 ------
 
@@ -207,7 +467,7 @@
 
 1. 进程和线程的区别:
 
-    进程通俗来讲就是运行中的程序, 包括一系列的系统资源: 例如打开的文件, 等待的信号, 处理器的状态, 地址空间等, 一个进程包含一个或多个线程执行单元. 线程可以共享进程的资源, 又可以独立调度, 每一个线程都有自己的程序计数器, 方法栈, 程序计数器.
+    进程通俗来讲就是运行中的程序, 包括一系列的系统资源: 例如打开的文件, 等待的信号, 处理器的状态, 地址空间等, 一个进程包含一个或多个线程执行单元. 线程可以共享进程的资源, 又可以独立调度, 每一个线程都有自己的程序计数器, 方法栈.
 
     - Java 实现线程的三种方式:
         - 使用内核线程实现:
@@ -267,7 +527,7 @@
     - TERMINATED: 线程终止
 
     在 Linux 内核中并没有阻塞或等待状态, Linux 内核中与之相对应的是 `TASK_INTERRUPITLBLE` 状态. 处于该状态的线程在等待某个条件发生或者等待一个信号, 此时无法被调度器调度, 当条件发生或信号抵达时, 才会改变为 `TASK_RUNNING` 状态; 处于 `TASK_RUNNING` 状态的线程要么正在执行, 要么正在等待被调度.
-    
+
 6. sleep() 和 wait() 区别:
 
     `sleep()` 方法是 `Thread` 类的静态方法, 而 `wait()` 是对象的实例方法; 调用 `sleep()` 方法不会释放当前线程的锁, 而调用 `wait()` 方法会释放当前线程持有的锁; `sleep()` 方法到时间会自动恢复, `wait()` 方法可以通过 `notify()` 或 `notifyAll()` 方法恢复.
@@ -276,118 +536,122 @@
 
     `nofityAll()` 会唤醒等待队列中所有的线程, 并将它们放入到同步队列中参与锁的竞争; `nofity()` 会唤醒等待队列中等待时间最长的线程.
 
+8. volatile 的作用:
+
+    volatitle 修饰的变量在值修改之后会将新的值立即同步回主内存中, volatitle 修饰的变量在读取值的时候会先从主存中刷新变量. 保证了多线程操作时变量的可见性.(Java 还有 synchronized 和 final 关键字实现可见性). volatile 还可以禁止指令重排, 对一个 volatile 变量的写操作先行发生于后面对这个变量的读操作.
+
 9. Atomic 的原理:
 
     Atomic 主要利用底层硬件的原子性 CAS 指令和 volatitle 关键字保证原子操作; 底层的 CAS 指令保证了 Compare-Set 这一操作的原子性, volatitle 关键字保证了更改的数据对其它的可见性:  volatitle 修饰的变量在值修改之后会将新的值立即同步回主内存中, volatitle 修饰的变量在读取值的时候会先从主存中刷新变量.
-    
-9. synchronized 和 ReentrantLock 区别:
+
+10. synchronized 和 ReentrantLock 区别:
 
     ReentrantLock 使用起来比较灵活, 但是需要手动获取与释放锁, synchronized 不需要手动释放和开启锁; ReentrantLock 只适用于代码块锁, synchronized 可用于修饰方法, 代码块; volatile 标记的变量不会被编译器优化, synchronized 标记的变量可以被编译器优化.
 
-10. synchronized 底层实现:
+11. synchronized 底层实现:
 
-    synchronized 是由一对 monitorenter/monitorexit 指令实现的, monitor 对象是同步实现的基本单元. 在 JDK 1.6 之前, 是依赖操作系统底层的排它锁来实现的, 这时需要从用户态切换到内核态, 这种转换需要消耗处理器的时间, 如果代码块中的内容过于简单, 状态切换的时间可能比用户代码执行的时间还要长.
+     synchronized 是由一对 monitorenter/monitorexit 指令实现的, monitor 对象是同步实现的基本单元. 在 JDK 1.6 之前, 是依赖操作系统底层的排它锁来实现的, 这时需要从用户态切换到内核态, 这种转换需要消耗处理器的时间, 如果代码块中的内容过于简单, 状态切换的时间可能比用户代码执行的时间还要长.
 
-    JDK 1.6 之后引入了偏向锁, 轻量级锁. 
+     JDK 1.6 之后引入了偏向锁, 轻量级锁. 
 
-    - 偏向锁: 是指一段同步代码一直被一个线程所访问, 那么该线程会自动获取锁, 降低获取锁的代价(解决锁的重入问题).
-    - 轻量级锁: 是指当锁是偏向锁时, 被另外的线程所访问, 偏向锁就会升级为轻量级锁, 其它线程会通过自旋的形式尝试获取锁, 不会阻塞, 从而提高性能(解决两个线程锁的竞争问题).
-    - 重量级锁: 当两个锁参与竞争轻量级锁时, 通过自旋等待的线程超过一定的次数, 或者有第三个线程来竞争锁时, 轻量级锁会升级为重量级锁(这里的重量级指的是会通过系统调用来将线程挂起).
+     - 偏向锁: 是指一段同步代码一直被一个线程所访问, 那么该线程会自动获取锁, 降低获取锁的代价(解决锁的重入问题). 此时在对象头的 Mark Word 中存放获取锁的线程的 ID.
+     - 轻量级锁: 是指当锁是偏向锁时, 被另外的线程所访问, 偏向锁就会升级为轻量级锁, 其它线程会通过自旋的形式尝试获取锁, 不会阻塞, 从而提高性能(解决两个线程锁的竞争问题). 此时会在当前线程的栈帧中创建一个锁记录 (Lock Record) 的空间, 用于存储 Mark Word 的拷贝, 然后通过 CAS 操作尝试将对象的 Mark Word 更新为指向 Lock Record 的指针, 更新成功即表明该线程获取到锁.
+     - 重量级锁: 当两个锁参与竞争轻量级锁时, 通过自旋等待的线程超过一定的次数, 或者有第三个线程来竞争锁时, 轻量级锁会升级为重量级锁(这里的重量级指的是会通过系统调用来将线程挂起). 此时对象头的 Mark Word 指向重量级锁 (互斥量) 的指针.
 
-    
+     
 
-11. 线程池的状态:
+12. 线程池的状态:
 
-     - RUNNING: 接受新的任务, 处理等待队列中的任务.
-     - SHUTDONW: 不接受新的任务提交, 但是会继续处理等待队列中的任务.
-     - STOP: 不接受新的任务提交, 不再处理等待队列中的任务, 中断正在执行任务的线程.
-     - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换为 TIDYING 状态时, 会执行钩子方法 `terminated()`.
-     - TERMINATED:  `terminated()` 方法结束后, 线程池的状态就会变成这个.
+      - RUNNING: 接受新的任务, 处理等待队列中的任务.
+      - SHUTDONW: 不接受新的任务提交, 但是会继续处理等待队列中的任务.
+      - STOP: 不接受新的任务提交, 不再处理等待队列中的任务, 中断正在执行任务的线程.
+      - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换为 TIDYING 状态时, 会执行钩子方法 `terminated()`.
+      - TERMINATED:  `terminated()` 方法结束后, 线程池的状态就会变成这个.
 
-12. 线程池:
+13. 线程池:
 
-     * 原理: 
+      * 原理: 
 
-         传统的多线程是针对每一个任务都去创建一个线程, 创建线程会消耗系统的资源, 如果任务很多但是每个任务又都很小, 那么就会导致大量的系统资源被消耗和浪费. 而使用线程池则可以降低资源的消耗, 线程池将任务和线程的执行分隔开来, 使得一个线程可以获取多个任务来执行, 这样减少了创建线程的数量, 使用线程池可以带来如下的好处:
+          传统的多线程是针对每一个任务都去创建一个线程, 创建线程会消耗系统的资源, 如果任务很多但是每个任务又都很小, 那么就会导致大量的系统资源被消耗和浪费. 而使用线程池则可以降低资源的消耗, 线程池将任务和线程的执行分隔开来, 使得一个线程可以获取多个任务来执行, 这样减少了创建线程的数量, 使用线程池可以带来如下的好处:
 
-         * 降低资源的消耗: 通过重复利用已创建的线程降低线程创建和销毁造成的消耗.
-         * 提高相应速度: 当任务到达时, 任务可以不需要等到线程创建就能立即执行.
-         * 提高线程的可管理性: 可以同意分配, 调优和监控线程.
+          * 降低资源的消耗: 通过重复利用已创建的线程降低线程创建和销毁造成的消耗.
+          * 提高相应速度: 当任务到达时, 任务可以不需要等到线程创建就能立即执行.
+          * 提高线程的可管理性: 可以同意分配, 调优和监控线程.
 
-         当提交一个新任务到线程池时:
+          当提交一个新任务到线程池时:
 
-         * 线程池判断**核心线程池里的线程**是否都在执行任务. 如果不是, 则创建一个新的工作线程来执行任务. 如果是, 则进入下一个流程.
-         * 线程池判断工作队列是否已经满. 如果工作队列没有满, 则将新提交的任务存储在这个工作队列中. 如果满了, 则进入下一个流程.
-         * 线程池判断**线程池的线程**是否都处于工作状态. 如果没有, 则创建一个新的工作线程来执行任务. 如果满了, 则交给饱和策略来处理这个任务.
+          * 线程池判断**核心线程池里的线程**是否都在执行任务. 如果不是, 则创建一个新的工作线程来执行任务. 如果是, 则进入下一个流程.
+          * 线程池判断工作队列是否已经满. 如果工作队列没有满, 则将新提交的任务存储在这个工作队列中. 如果满了, 则进入下一个流程.
+          * 线程池判断**线程池的线程**是否都处于工作状态. 如果没有, 则创建一个新的工作线程来执行任务. 如果满了, 则交给饱和策略来处理这个任务.
 
-     * 线程池的创建:
+      * 线程池的创建:
 
-         - FixedThreadPool: 可重用固定线程数的线程池
+          - FixedThreadPool: 可重用固定线程数的线程池
 
-             ```java
-             public static ExecutorService newFixedThreadPool(int nThreads) {
-                 /*
-                  * corePoolSize 和 maximumPoolSize 都被设置为固定值
-                  * 当线程池的线程数大于 corePoolSize 时, keepAliveTime 为多于的空闲线程等待新任务
-                  * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 * 味着多于的空闲线程会被立即终止
-                  */
-                 return new ThreadPoolExecutor(nThreads, nThreads,
-                                               0L, TimeUnit.MILLISECONDS,
-                                               new LinkedBlockingQueue<Runnable>());
-             }
-             ```
-
-             `FixedThreadPool` 使用无界队列 `LinkedBlockingQueue` 作为线程池的工作队列(队列的容量为 Integer.MAX_VALUE). 使用无界队列的影响:
-
-             - 当线程池中的线程数量达到 `corePoolSize` 后, 新任务将在无界队列中等待, 因此线程池的线程数不会超过 `corePoolSize` .
-             - 由于上面原因, 使用无界队列时, `maximumPoolSize` 将是一个无效参数.
-             - 由于上面两个原因, 使用无界队列时, `keepAliveTime` 将是一个无效参数.
-             - 由于使用无界队列, 运行中的 `FixedThreadPool` 不会拒绝任务.
-
-         - SingleThreadExecutor: 单个线程数的线程池
-
-             ``` Java
-             public static ExecutorService newSingleThreadExecutor() {
-                 /*
-                  * corePoolSize 和 maximumPoolSize 都被设置为 1, 其余和 FixedThreadPool 相同
-                  */
-                 return new FinalizableDelegatedExecutorService
-                     (new ThreadPoolExecutor(1, 1,
-                                             0L, TimeUnit.MILLISECONDS,
-                                             new LinkedBlockingQueue<Runnable>()));
-             }
-             ```
-
-         - CachedThreadPool: 根据需要创建新线程的线程池    
-
-             ```java
-              public static ExecutorService newCachedThreadPool() {
+              ```java
+              public static ExecutorService newFixedThreadPool(int nThreads) {
                   /*
-                   * 这里的 corePoolSize 被设置为 0, maximumPoolSize 
-                   * 被设置为 Integer.MAX_VALUE, keepAliveTime 设置为
-                   * 60L
+                   * corePoolSize 和 maximumPoolSize 都被设置为固定值
+                   * 当线程池的线程数大于 corePoolSize 时, keepAliveTime 为多于的空闲线程等待新任务
+                   * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 * 味着多于的空闲线程会被立即终止
                    */
-                  return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                                                60L, TimeUnit.SECONDS,
-                                                new SynchronousQueue<Runnable>());
+                  return new ThreadPoolExecutor(nThreads, nThreads,
+                                                0L, TimeUnit.MILLISECONDS,
+                                                new LinkedBlockingQueue<Runnable>());
               }
-             ```
+              ```
 
-             `CachedThreadPool` 使用没有容量的 `SynchronousQueue` 作为线程池的工作队列. 由于 `CachedThreadPool` 的 `maximumPoolSize` 是无界的, 如果主线程提交任务的速度高于 `maximumPool` 中线程处理任务的速度, `CachedThreadPool` 会不断创建新的线程.
+              `FixedThreadPool` 使用无界队列 `LinkedBlockingQueue` 作为线程池的工作队列(队列的容量为 Integer.MAX_VALUE). 使用无界队列的影响:
 
-         - newSingleThreadScheduledPool(): 创建单个线程的可进行定时或周期性工作调度的线程池
+              - 当线程池中的线程数量达到 `corePoolSize` 后, 新任务将在无界队列中等待, 因此线程池的线程数不会超过 `corePoolSize` .
+              - 由于上面原因, 使用无界队列时, `maximumPoolSize` 将是一个无效参数.
+              - 由于上面两个原因, 使用无界队列时, `keepAliveTime` 将是一个无效参数.
+              - 由于使用无界队列, 运行中的 `FixedThreadPool` 不会拒绝任务.
 
-         - newThreadScheduledPool(): 创建多个线程的可进行定时或周期性工作调度的线程池
+          - SingleThreadExecutor: 单个线程数的线程池
 
-         - newWorkStealingPool(): 创建持有足够的线程的线程池来支持给定的并行级别. 默认会创建和处理器核心数量相同的线程.
+              ``` Java
+              public static ExecutorService newSingleThreadExecutor() {
+                  /*
+                   * corePoolSize 和 maximumPoolSize 都被设置为 1, 其余和 FixedThreadPool 相同
+                   */
+                  return new FinalizableDelegatedExecutorService
+                      (new ThreadPoolExecutor(1, 1,
+                                              0L, TimeUnit.MILLISECONDS,
+                                              new LinkedBlockingQueue<Runnable>()));
+              }
+              ```
 
-     * 线程池关闭:
+          - CachedThreadPool: 根据需要创建新线程的线程池    
 
-         关闭线程池可以调用线程池的 `shutdown()` 或 `shutdownNow()` 方法来关闭线程池. 它们的原理是遍历线程池中的工作线程, 然后逐个调用线程的 `interrupt()` 方法来中断线程, 所以无法响应中断的线程永远无法终止.
+              ```java
+               public static ExecutorService newCachedThreadPool() {
+                   /*
+                    * 这里的 corePoolSize 被设置为 0, maximumPoolSize 
+                    * 被设置为 Integer.MAX_VALUE, keepAliveTime 设置为
+                    * 60L
+                    */
+                   return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                                 60L, TimeUnit.SECONDS,
+                                                 new SynchronousQueue<Runnable>());
+               }
+              ```
 
-         `shutdownNow()` 先将线程池的状态设置 `STOP`, 然后尝试**停止所有的正在执行或暂停任务**的线程, 并**返回等待执行任务的列表**;  `shutdown()` 只是将线程池的状态设置为 `SHUTDOWN` 状态, 然后**中断所有没有正在执行任务**(正在执行的线程不中断, 等待它们执行完毕)的线程.
+              `CachedThreadPool` 使用没有容量的 `SynchronousQueue` 作为线程池的工作队列. 由于 `CachedThreadPool` 的 `maximumPoolSize` 是无界的, 如果主线程提交任务的速度高于 `maximumPool` 中线程处理任务的速度, `CachedThreadPool` 会不断创建新的线程.
 
-         只要调用了上面两个方法中任意一个, `isShutdown()` 方法就会返回 true. 当所有的任务都已经关闭后, 才表示线程池关闭成功, 这时调用 `isTerminated()` 方法返回 true.
+          - newSingleThreadScheduledPool(): 创建单个线程的可进行定时或周期性工作调度的线程池
+
+          - newThreadScheduledPool(): 创建多个线程的可进行定时或周期性工作调度的线程池
+
+          - newWorkStealingPool(): 创建持有足够的线程的线程池来支持给定的并行级别. 默认会创建和处理器核心数量相同的线程.
+
+      * 线程池关闭:
+
+          关闭线程池可以调用线程池的 `shutdown()` 或 `shutdownNow()` 方法来关闭线程池. 它们的原理是遍历线程池中的工作线程, 然后逐个调用线程的 `interrupt()` 方法来中断线程, 所以无法响应中断的线程永远无法终止.
+
+          `shutdownNow()` 先将线程池的状态设置 `STOP`, 然后尝试**停止所有的正在执行或暂停任务**的线程, 并**返回等待执行任务的列表**;  `shutdown()` 只是将线程池的状态设置为 `SHUTDOWN` 状态, 然后**中断所有没有正在执行任务**(正在执行的线程不中断, 等待它们执行完毕)的线程.
+
+          只要调用了上面两个方法中任意一个, `isShutdown()` 方法就会返回 true. 当所有的任务都已经关闭后, 才表示线程池关闭成功, 这时调用 `isTerminated()` 方法返回 true.
 
 14. 线程池 submit() 和 execute() 方法区别:
 
@@ -404,6 +668,7 @@
         - 请求与保持条件(hold and wait or resource holding): 线程中已经保持了至少一个资源, 但是又提出了新的资源请求, 而该资源已经被其它线程占有, 此时请求线程被阻塞, 但是自己对已经获得资源保持不放.
         - 不剥夺条件(no preemption): 线程未使用完的资源在未使用完毕之前, 不能被其它线程强行夺走, 即只能由获得该资源的线程自己来释放.
         - 循环等待条件(circle wait): 线程间形成守卫相接循环等待资源的关系. 在发生死锁时必然存在一个线程等待队列 {P1, P2, P3, ..., Pn}, 其中 P1 等待 P2 占有的资源, P2 等待 P3 占有的资源, ..., Pn 等待 P1 占有的资源, 形成一个线程等待环路.
+
     - 死锁避免:
         - 破环请求保持条件:
             - 静态分配: 每个进程在开始执行时就申请它所需要的全部资源.
@@ -412,11 +677,20 @@
             - 等待期间将占用的资源隐式的释放掉, 供其它线程使用, 等待的线程只有重新获取自己原有的资源以及新申请的资源才可以重新启动, 执行(例如调用 wait() 方法).
         - 破环循环等待条件:
             - 采用资源有序分配的基本思想. 将系统资源顺序进行编号, 将紧缺的, 稀少的资源采用较大的编号, 申请资源时必须按照编号的顺序执行, 有小编号资源的线程才能申请较大编号的资源.
+        - 常见方法:
+            - 避免一个线程同时获取多个锁
+            - 避免一个线程在锁内同时占用多个资源, 尽量保证每个锁只占用一个资源
+            - 尝试使用定时锁
+            - 对数据库加锁和解锁必须在一个数据库连接里, 否则会出现解锁失败
         - 具体操作:
             - 尽量使用 `tryLock(long timeout, TimeUnit unit)` 的方法 (ReentrantLock、ReentrantReadWriteLock)，设置超时时间，超时可以退出防止死锁.
             - 尽量使用 Java. util. concurrent 并发类代替自己手写锁.
             - 尽量降低锁的使用粒度，尽量不要几个功能用同一把锁.
             - 尽量减少同步的代码块.
+
+    - 死锁查看
+
+        - dump 线程查看: jps 获取进程号; jstack -F 进程号 dump 线程; 
 
 16. ThreadLocal 原理及使用场景:
 
@@ -424,9 +698,9 @@
 
     // TODO FutureTask 执行原理
 
-1. 参考:
+17. 参考:
 
-   [1] : [浅谈Java Future](<https://zhuanlan.zhihu.com/p/42682411>)
+    [1] : [浅谈Java Future](<https://zhuanlan.zhihu.com/p/42682411>)
 
 ------
 
@@ -613,6 +887,9 @@
 
     - Error: 错误, 一般指与虚拟机相关的问题.
 
+        - StackOverflowError: 栈溢出异常. 抛出这个错误表明应用程序因为深递归导致栈被耗尽了(也就是 Java 虚拟机栈被耗尽了). 可以通过 `-Xss` 参数设置方法栈的大小.
+        - OutOfMemoryError: 例如在堆中没有内存完成实例分配, 并且堆也无法扩展时, 将抛出该错误.
+
     - Exception: 异常.
 
         - 运行时异常(RuntimeException): 
@@ -625,7 +902,118 @@
 
             常见必检异常: IOException, FileNotFoundException, SocketException, SQLException, ReflectiveOperationException, ClassNotFoundException, NotSuchMethodException, NotSuchFieldException.
 
-2. 异常相关处理:
+2. throw 和 throws 区别
+
+    - throw 作用于方法内部, throws 用于方法声明
+    - throw 后面跟异常对象, throws 后面跟异常类型
+    - throw 后面只能跟一个异常对象, throws 后面可以跟多个异常类型
+
+3. final, finally, finalize 区别:
+
+    - final 是修饰符, 如果修饰类,  此类不能被继承; 如果修饰方法, 表明方法不能被重写; 如果修饰变量, 则表明该变量不可变.
+    - finally 是 try{} catch{} finally{} 块中的最后一块, 表示不论发生任何情况都会执行，finally 部分可以省略，但如果 finally 部分存在，则一定会执行 finally 里面的代码.
+    - finalize 是 Object 类的方法, 在垃圾收集器回收时会调用被回收对象的此方法.
+
+4. try catch finally 哪些部分可以省略:
+
+    - try 和 catch 都可以省略, 但是两者不能同时省略.
+
+5. 异常屏蔽问题:
+
+     在try-catch-finally代码块中，如果try块、catch块和finally块均有异常抛出，那么最终只能抛出finally块中的异常，而try块和catch块中的异常将会被屏蔽。这就是**异常屏蔽问题**。如下面代码所示
+
+      ```java
+      public class Connection implements AutoCloseable {
+          public void sendData() throws Exception {
+              throw new Exception("send data");
+          }
+          @Override
+          public void close() throws Exception {
+              throw new MyException("close");
+          }
+      }
+      
+      public class TryWithResource {
+          public static void main(String[] args) {
+              try {
+                  test();
+              }
+              catch (Exception e) {
+                  e.printStackTrace();
+              }
+          }
+          private static void test() throws Exception {
+              Connection conn = null;
+              try {
+                  conn = new Connection();
+                  // 这里会产生异常, 在方法返回之前调用 finally()
+                  conn.sendData();
+              }
+              finally {
+                  if (conn != null) {
+                      // 这里也会产生异常, 该异常覆盖了 try-catch 块中的异常, 异常栈中不会打印出 sendData() 方法的异常信息
+                      conn.close();
+                  }
+              }
+          }
+      }
+      
+      public class TryWithResource {
+          public static void main(String[] args) {
+              try {
+                  test();
+              }
+              catch (Exception e) {
+                  e.printStackTrace();
+              }
+          }
+          private static void test() throws Exception {
+              Connection conn = null;
+              try (conn = new Connection();) {
+                  conn.sendData();
+              }
+          }
+      }
+      
+      public class TryWithResource {
+          public TryWithResource() {
+          }
+          public static void main(String[] args) {
+              try {
+                  // 资源声明代码
+                  Connection e = new Connection();
+                  Throwable var2 = null;
+                  try {
+                      // 资源使用代码
+                      e.sendData();
+                  } catch (Throwable var12) {
+                      var2 = var12;
+                      throw var12;
+                  } finally {
+                      // 资源释放代码
+                      if(e != null) {
+                          if(var2 != null) {
+                              try {
+                                  e.close();
+                              } catch (Throwable var11) {
+                                  // 这里将被覆盖的异常信息(try-catch)赋值给最终抛出的异常信息
+                                  var2.addSuppressed(var11);
+                              }
+                          } else {
+                              e.close();
+                          }
+                      }
+                  }
+              } catch (Exception var14) {
+                  var14.printStackTrace();
+              }
+          }
+      }
+      ```
+
+  
+
+6. 异常相关处理:
 
     - 异常捕获:
 
@@ -636,8 +1024,6 @@
         	e.printStackTrace();
         }
         ```
-
-        
 
     - 声明抛出异常:
 
@@ -669,7 +1055,36 @@
         }
         ```
 
-3. 异常运行分析:
+7. 异常运行分析:
+
+    异常捕获是根据运行时类型进行捕获的
+
+    ```java
+    class A extends Exception {}
+    class B extends A {}
+     
+    public class Test {
+        public static void main(String[] args) throws Exception {
+            try {
+                try {
+                    throw new B();
+                } 
+                catch (A a) {
+                    System.out.println("Caught A");
+                    throw a;
+                }
+            } 
+            catch (B b) {
+                // 这里可以捕获到异常
+                System.out.println("Caught B");
+                return ;
+            }
+            finally {
+                System.out.println("Hello World!");
+            }
+        }
+    }
+    ```
 
     下面代码没有出现异常返回值为 1; 出现 Exception 异常返回 2; 出现 Exception 以外的异常, 方法非正常退出, 没有返回值.
 
@@ -715,7 +1130,7 @@
             17: istore_1 // 将栈顶变量保存到第二个本地变量, 也就是 x 中, 此时 x = 3
             18: iload  4 // 将第五个本地变量, 也就是 returnValue 推送至栈顶
                    
-            20: ireturn  // 从当前方法返回 int , 也就是 returnValue, 到这里是方法正常结束返回
+            20: ireturn  // 从当前方法返回 int , 也就是 returnValue, 到这里是方法异常结束返回
             // 当出现不是 Exception 类型的异常时走到这里    
             21: astore_3 // 将变量保存到第四个本地变量
             22: iconst_3 // 将常量 3 推送至栈顶
@@ -726,15 +1141,25 @@
                 
     ```
 
-------
+8. 参考
+
+   [1] : [Java栈溢出--StackOverflowError](<https://www.jianshu.com/p/faad22e1faf0>)
+
+   [2] : [揭晓Java异常体系中的秘密](<https://juejin.im/post/5aa64da06fb9a028d4443b61#heading-4>)
 
 #### Java Web:
 
 1. JSP 和 Servlet 区别:
 
-    JSP(Java Server Page) 最终会生成一个对应的 `Servlet`, JSP 中的内容会在生成的 `Servlet` 的 `_jspService()` 方法中以流的形式生成, JSP 中声明的变量和方法将会称为该 `Servlet` 的成员变量. JSP 将视图的表现从 `Servlet` 中抽取出来, 避免了直接在 Java 代码中耦合大量的 HTML 标签. 
+    JSP(Java Server Page) 最终会生成一个对应的 `Servlet`, JSP 中的内容会在生成的 `Servlet` 的 `_jspService()` 方法中以流的形式生成, JSP 中声明的变量和方法将会成为该 `Servlet` 的成员变量. JSP 将视图的表现从 `Servlet` 中抽取出来, 避免了直接在 Java 代码中耦合大量的 HTML 标签. 
 
-2. JSP 内置对象:
+2. Servlet 生命周期
+
+    - 加载 Servlet 的 class 方法, 实例化 Servlet, 调用 `Servlet#init()` 方法完成初始化
+    - 调用 `Servlet#service()` 方法响应用户请求
+    - Servlet 容器关闭时, 调用 `Servlet#destroy()` 方法销毁
+
+3. JSP 内置对象:
 
     JSP 的 9 大内置对象都是生成的对应的 `Servlet` 的 `_jspService()` 方法的局部变量
 
@@ -747,15 +1172,15 @@
     - page: 代表页面本身, 也就是 Servlet 中的 this.
     - out: JspWriter 对象实例, 代表 JSP 页面的输出流, 用于输出内容, 形成 HTML 页面.
     - exception: Throwable 对象实例, 代表其它页面中的异常和错误, 只有当编译指令  page 的 isErrorPage 属性为 true 时, 该对象才可以使用.
-    
-3. JSP 四种作用域:
+
+4. JSP 四种作用域:
 
     - application: 对于整个 Web 页面有效, 一旦 JSP, Servlet 将数据放入 application 中, 该数据将可以被该应用下其它所有 JSP, Servlet 访问.
     - session: 仅对一次会话有效, 一旦 JSP, Servlet 将数据放入 session 中, 该数据将可以被本次会话的其它所有的 JSP, Servlet 访问.
     - request: 仅对本次请求有效, 一旦 JSP, Servlet 将数据放入 request 中, 该数据将可以被本次请求的其它所有的 JSP, Servlet 访问.
     - page: 仅对当前页面有效. 一旦 JSP, Servlet 将数据放入 request 中, 该数据只可以被当前页面的 JSP 脚本, 声明部分访问.
 
-4. Session 和 Cookie 区别:
+5. Session 和 Cookie 区别:
 
     // TODO 登陆的实现, 忘记在哪里看的可以从 JSESSIONID 中解析出用户名和密码了
 
@@ -768,18 +1193,18 @@
     - URL重写，就是把 sessionId 直接附加在 URL 路径的后面.
     - 表单隐藏字段。就是服务器会自动修改表单，添加一个隐藏字段，以便在表单提交时能够把 sessionId 传递回服务器
 
-5. 避免 SQL 注入:
+6. 避免 SQL 注入:
 
     - 使用预处理 PreparedStatement
     - 使用正则表达式过滤掉字符中的特殊字符
 
-6. XSS 攻击以及避免:
+7. XSS 攻击以及避免:
 
     跨站脚本攻击 (Cross-Site Scripting) 是一种代码注入攻击. 攻击者通过在目标网站上注入恶意脚本, 使之在用户的浏览器上运行.
 
     避免的核心是必须对输入的数据做过滤处理.
 
-7. CSRF 攻击及避免:
+8. CSRF 攻击及避免:
 
     跨站请求伪造 (Cross-Site Request Forgery) 是盗用者盗用了你的身份, 以你的名义发送恶意请求.
 
@@ -787,7 +1212,7 @@
     - 关键操作添加验证码
     - 在请求地址添加 token 并验证(Spring Security 中默认开启)
 
-8. 参考:
+9. 参考:
 
     [1] : [Cookie 与 Session 的区别](https://juejin.im/entry/5766c29d6be3ff006a31b84e)
 
@@ -910,11 +1335,13 @@
 
 2. AOP:
 
-    Aspect-oritented programming (面向切面编程) 是在运行时，动态地将代码切入到类的指定方法, 指定位置上.
+    Aspect-oritented programming (面向切面编程) 是在运行时，动态地将代码切入到类的指定方法, 指定位置上. 对于接口代理使用 JDK, 对于类代理使用 Cglib.
+
+    Spring AOP 和 AspectJ AOP 区别在于前者是运行时增强, 后者是编译时增强
 
 3. IOC:
 
-    Inversioin of Control (控制反转) 是 Spring 的核心, 就是由 Spring 来负责控制对象的声明周期和对象之间的关系.
+    Inversioin of Control (控制反转) 是 Spring 的核心, 就是由 Spring 来负责控制对象的生命周期和对象之间的关系.
 
 4. DI: 
 
@@ -972,70 +1399,335 @@
     - 会话 (Session): 在 Web 应用中, 为每个会话创建一个 bean 实例.
     - 请求 (Request): 在 Web 应用中, 为每个请求创建一个 bean 实例.
 
-8. Spring 自动装配:
+8. 常用 Context
 
-    - no: 没有自动装配, 应该用显示 bean 引用进行装配.
-    - byName: 根据 bean 的名称注入对象依赖项.
-    - byType: 根据类型注入对象依赖项.
-    - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
-    - autodetect: 先通过 constructor 构造, 如果不行, 则使用 byType 构造.
+    - AnnotationConfigApplicationContext: 从一个或多个基于 Java 的配置类中加载 Spring 上下文(即从 @Configuration 标注的类上加载).
 
-9. @Autowired 注解作用:
+        ```java
+        ApplicationContext ctx = new AnnotationConfigApplicationContext(AppContext.class);
+        Course course = ctx.getBean(Course.class);
+        course.getName();
+        ```
 
-    该注解可以对类成员变量, 方法以及构造函数进行标注, 完成自动装配的功能, 通过对该注解的使用来消除 `setter` 方法.
+        
 
-10. Spring 事务实现方式:
+    - FileSystemXmlApplicationContext：从文件系统下的一个或多个 XML 配置文件中加载上下文定义.
 
-    - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
-    - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
+      ```java
+      // 可以使用 classpath: 前缀
+      ApplicationContext ctx = new FileSystemXmlApplicationContext( "G:/Test/applicationcontext.xml");
+      
+      ApplicationContext ctx = new FileSystemXmlApplicationContext( "classpath:applicationcontext.xml");
+      ```
 
-11. 单点登录:
+      
 
-12. Spring JSP 视图渲染过程:
+    - ClassPathXmlApplicationContext：从类的路径下的一个或多个 XML 配置文件中加载上下文定义. 在这里，你不需要提供 XML 文件的完整路径，只需正确配置 CLASSPATH 环境变量即可，因为，容器会从 CLASSPATH 中搜索 bean 配置文件。
 
-     * `InternalResourceView#render()`方法
+      ```java
+      // 默认的根目录是在WEB-INF/classes下面
+      ApplicationContext ctx = new ClassPathXmlApplicationContext( "/applicationcontext.xml ");
+      ```
 
-     * `Application#forward()`方法
+    - XmlWebApplicationContext：该容器会在一个 web 应用程序的范围内加载在 XML 文件中已被定义的 bean(这个需要理解一下).
 
-     * `ApplicationFilterChain#doFilter()`方法
+9. Resource 加载使用
 
-     * `JspServlet.service()`方法
+    Resource 接口是 Spring 资源访问策略的抽象，它本身并不提供任何资源访问实现，具体的资源访问由该接口的实现类完成——每个实现类代表一种资源访问策略.
 
-     * `JspCompilationContext.compile()`方法
+    - UrlResource：访问网络资源的实现类。
+    - ClassPathResource：访问类加载路径里资源的实现类。
+    - FileSystemResource：访问文件系统里资源的实现类。
+    - ServletContextResource：访问相对于 ServletContext 路径里的资源的实现类：
+    - InputStreamResource：访问输入流资源的实现类。
+    - ByteArrayResource：访问字节数组资源的实现类。 这些 Resource 实现类，针对不同的的底层资源，提供了相应的资源访问逻辑，并提供便捷的包装，以利于客户端程序的资源访问。
 
-     * `eclipse.Compiler.compile()`方法
+10. Spring Bean 的生命周期
 
-     然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
+    ![](./asserts/beanlifecycle.PNG)
 
-13. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
+    - Bean 实例化
+    - 填充属性(调用 setter 方法)
+    - 调用 BeanNameAware#setBeanName()
+    - 调用 BeanFactoryAware#setBeanFactory()
+    - 调用 ApplicationConextAware#setApplicationContext()
+    - 调用 BeanPostProcessor#postProcessBeforeInitializatioin()
+    - 调用 InitializingBean#afterPropertiesSet()
+    - 调用自定义的初始化方法(Bean 定义的 init-method 定义的方法)
+    - 调用 BeanPostProcessor#postProcessAfterInitialization()
+    - 使用 Bean
+    - 调用 DisposableBean#destroy()
+    - 调用自定义销毁方法(Bean 定义的 destroy-method 定义的方法)
 
-     - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
-     - ModelMethodProcessor: 处理返回值为 Model
-     - ViewMethodReturnValueHandler: 处理返回值为 View
-     - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
-     - StreamingResponseBodyReturnValueHandler: 
-     - HttpEntityMethodProcessor
-     - HttpHeadersReturnValueHandler
-     - CallableMethodReturnValueHandler
-     - DeferredResultMethodReturnValueHandler
-     - AsyncTaskMethodReturnValueHandler
-     - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
-     - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
-     - ViewNameMethodReturnValueHandler: 处理直接返回String类型
-     - MapMethodProcessor: 处理返回Map类型
-     - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+11. AOP:
 
-     
+     - 连接点(Joinpoint): 程序执行的某个特定位置.
+     - 切点(Pointcut): 符合切点定义表达式的连接点.  如果连接点相当于数据中的记录，那么切点相当于查询条件，一个切点可以匹配多个连接点.
+     - 增强(Advice): 织入到连接点的一段代码程序.
+     - 切面(Aspect):切面是由切点和增强（引介）组成
+     - 引入(Introduction):  可以向现有的类添加新方法或属性.
+     - 织入(Weaving): 把切面应用到目标对象并创建新的对象代理的过程.
+         - 编译时织入: 需要特殊的Java编译期(例如AspectJ的ajc)
+         - 类加载时织入: 要求使用特殊的类加载器，在装载类的时候对类进行增强
+         - 运行时织入: 在运行时为目标类生成代理实现增强。Spring采用了动态代理的方式实现了运行时织入.
 
-14. 参考
+12. Spring 自动装配:
 
-      [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
+     - no: 没有自动装配, 应该用显示 bean 引用进行装配.
+     - byName: 根据 bean 的名称注入对象依赖项.
+     - byType: 根据类型注入对象依赖项.
+     - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
+     - autodetect: 先通过 constructor 构造, 如果不行, 则使用 byType 构造.
 
-      [2] : [依赖注入和控制反转的理解，写的太好了。](https://blog.csdn.net/bestone0213/article/details/47424255)
+13. 常用注解:
 
-      [3] : [单点登录（SSO）看这一篇就够了](<https://yq.aliyun.com/articles/636281>)
+     - @Required 注解: 检查特定的属性是否设置，而不是特定类型的所有属性(就是在 XML 中设置或使用 @Value 注解赋值).
+
+     - @Profile 注解: 某个环境激活才装配 Bean
+
+         ```java
+         @Profile("prod")
+         public class ProductionConfig {
+             
+         }
+         ```
+
+     - @Conditional 注解: 满足某个条件才装配 Bean
+
+         ```java
+         // Spring Boot 中大量使用该注解来实现自动化的配置
+         @Bean
+         @Conditional(MagixExistsCondition.class)
+         public MagicBean magicBean() {
+             return new MagicBean();
+         }
+         
+         public class MagicExistsCondition implements Conditon {
+             public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadat) {
+                 Environment env = context.getEnvironment();
+                 return env.containsProperty("magix");
+             }
+         }
+         ```
+
+         
+
+     - @Primary 注解: 接口有多个实现类时, 可以使用该注解表明优先选用哪一个 Bean
+
+         ```java
+         @Component
+         @Primary
+         Public class IceCream implements Dessert {
+             
+         }
+         ```
+
+     - @Qulifier 注解: 限定装配哪一个 Bean.
+
+         ```java
+         // 声明 Bean 指定限定符
+         @Component
+         @Qualifier("cold")
+         public class IceCream implements Dessert {
+             
+         }
+         // 注入, 这里也可以通过 @Qualifier("iceCream") 指定 Bean 的 ID 来限定, 但一般不这样做, 因为 IceCream 可能重构而改为其它的名称
+         @Autowired
+         @Qualifier("cold")
+         public void setDessert(Dessert dessert) {
+             this.dessert = dessert;
+         }
+         ```
+
+     - @Value 注解: 为字段赋值
+
+         ```java
+         // 还可以使用 Spring 表达式来获取值
+         public BlankDisc(@Value("${disc.title}") String title, @Value("${disc.artis}") String artist) {
+             this.title = title;
+             this.artis = artist;
+         }
+         ```
+
+         
+
+     - @Autowired 注解作用: 该注解可以对类成员变量, 方法以及构造函数进行标注, 完成自动装配的功能, 通过对该注解的使用来消除 `setter` 方法.
+
+14. Spring 事务实现方式:
+
+     - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
+     - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
+
+15. Spring 事务传播
+
+       Spring 允许通过声明方式, 在 IOC 配置中指定事务的边界和事务属性, Spring 自动在指定的事务边界上应用事务属性.
+
+       - TransactionDefinition: 描述事务的隔离级别, 超时时间, 是否为只读事务和事务传播规则等控制事务具体行为的事务属性.
+
+       - PlatformTransactionManager 根据 TransactionDefinition 提供的事务属性配置信息创建事务, 并用 TransactionStatus 描述激活事务的状态.
+
+       - Spring JDBC 和 MyBatis 事务管理器
+
+         DataSourceTransactionManager 内部使用 DataSource 的 `Connection#commit()`, `Connection#rollback()` 进行事务的管理
+
+       - DataSourceUtils#getConnection(DataSource dataSource) 方法可以从指定的数据源中获取与当前线程绑定的 Connection.
+
+       - Spring 事务传播行为
+
+         | 事务传播行为类型          | 说明                                                         |
+         | ------------------------- | ------------------------------------------------------------ |
+         | PROPAGATION_REQUIRED      | 如果当前没有事务, 则新建一个事务; 如果已经存在一个事务, 则加入到这个事务中 |
+         | PROPAGATION_SUPPORTS      | 支持当前事务, 如果当前没有事务, 则以非事务方式运行           |
+         | PROPAGATION_MANDATORY     | 使用当前的事务, 如果当前没有事务, 则抛出异常                 |
+         | PROPAGATION_REQUIRES_NEW  | 新建事务, 如果当前事务存在, 则把当前事务挂起                 |
+         | PROPAGATION_NOT_SUPPORTED | 以非事务的方式执行操作, 如果存在当前事务, 则把当前事务挂起   |
+         | PROPAGATION_NEVER         | 以非事务方式执行, 如果存在当前事务, 则抛出异常               |
+         | PROPAGATION_NESTED        | 如果存在当前事务, 则在嵌套事务内执行; 如果当前没有事务, 则新建一个事务 |
+
+      - 编程式事务
+
+        ```java
+        public class ForumService {
+            private ForumDao forumDao;
+            private TransactionTemplate template;
+            
+            @Autowired
+            public void setTemplate(TransanctionTemplate template) {
+                this.template = template;
+            }
+            
+            public void addForum(final Forum forum) {
+                template.execute(new TransanctionCallbackWithoutResult() {
+                    protected void doInTransactionWithoutResult(TransactionStatus status) {
+                        forumDao.addForum(forum);
+                    } 
+                });
+            }
+        }
+        ```
+
+      - 声明式事务
+
+        ```xml
+        <!--声明事务管理器-->
+        <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+            <property name="dataSource" ref="dataSource"/>
+        </bean>
+        
+        <!--需要实施事务增强的目标业务 Bean-->
+        <bean id="forumTarget" class="com.smart.service.forum"
+              p:forumDao-ref="forumDao"
+              p:topicDao-ref="topicDao"
+              p:postDao-ref="postDao"/>
+        
+        <!--使用代理工厂类为目标业务 Bean 提供事务增强-->
+        <bean id="forum" class="org.springframework.transaction.intercepter.TransactionProxyFactoryBean"
+              p:transactionManager-ref="txManager"
+              p:target-ref="forumTarget">
+        	<property name="transactionAttributes">
+            	<props>
+                	<prop key="get*">PROPAGATION_REQUIRED, readOnly</prop>
+                    <prop key="*">PROPAGATION_REQUIRED</prop>
+                </props>
+            </property>
+        </bean>
+        
+        <!-------------------------使用切面定义语言--------------->
+        <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+        p:dataSource-ref="dataSource"/>
+        
+        <aop:config>
+        	<aop:pointcut id="serviceMethod" expression="execution(* com.smart.service.*Forum.*(..))"/>
+            <aop:advisor pointcut-ref="serviceMethod" advice-ref="txAdvice"/>
+        </aop:config>
+        
+        <tx:advice id="txAdvice" transaction-manager="txManager">
+        	<tx:attributes>
+            	<tx:method name="get*" read-only="false"/>
+                <tx:method name="add" rollback-for="Exception"/>
+                <tx:method name="update"/>
+            </tx:attributes>
+        </tx:advice>
+        
+        <!----------------------------开启注解---------------->
+        <tx:annotation-driver transaction-manager="txManager"/>
+        ```
+
+        ```java
+        // 在业务类上使用 @Transactional 注解
+        @Transcational
+        public class Forum {
+            // 这里注解会覆盖上面的注解
+            @Transactional(readOnly = true)
+            public Forum getForm(int forumId) {
+                return foruDao.getForum(forumId);
+            }
+        }
+        ```
+
+        
+
+16. 单点登录:
+
+17. SpringMVC 工作过程:
+
+     ![](./asserts/SpringMVC.PNG)
+
+18. Spring JSP 视图渲染过程:
+
+        * `InternalResourceView#render()`方法
+
+        * `Application#forward()`方法
+
+        * `ApplicationFilterChain#doFilter()`方法
+
+        * `JspServlet.service()`方法
+
+        * `JspCompilationContext.compile()`方法
+
+        * `eclipse.Compiler.compile()`方法
+
+        然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
+
+19. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
+
+        - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
+        - ModelMethodProcessor: 处理返回值为 Model
+        - ViewMethodReturnValueHandler: 处理返回值为 View
+        - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
+        - StreamingResponseBodyReturnValueHandler: 
+        - HttpEntityMethodProcessor
+        - HttpHeadersReturnValueHandler
+        - CallableMethodReturnValueHandler
+        - DeferredResultMethodReturnValueHandler
+        - AsyncTaskMethodReturnValueHandler
+        - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+        - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
+        - ViewNameMethodReturnValueHandler: 处理直接返回String类型
+        - MapMethodProcessor: 处理返回Map类型
+        - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+
+        
+
+20. 参考
+
+     [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
+
+     [2] : [依赖注入和控制反转的理解，写的太好了。](https://blog.csdn.net/bestone0213/article/details/47424255)
+
+     [3] : [Spring Bean的生命周期（非常详细）](https://www.cnblogs.com/zrtqsk/p/3735273.html)
+
+     [4] : [Spring加载resource时classpath*:与classpath:的区别](<https://www.jianshu.com/p/5bab9e03ab92>)
+
+     [5] : [Spring 面试题](<https://github.com/Homiss/Java-interview-questions/blob/master/%E6%A1%86%E6%9E%B6/Spring%20%E9%9D%A2%E8%AF%95%E9%A2%98.md>)
+
+     [3] : [单点登录（SSO）看这一篇就够了](<https://yq.aliyun.com/articles/636281>)
 
      [4] : [单点登录（SSO），从原理到实现](<https://cloud.tencent.com/developer/article/1166255>)
+
+     [5] : [Spring IOC 容器源码分析](<https://javadoop.com/post/spring-ioc>)
+
+     [6] : [Spring AOP,AspectJ, CGLIB 有点晕](<https://www.jianshu.com/p/fe8d1e8bd63e>)
 
 ------
 
@@ -1216,7 +1908,17 @@
    - 重复读(Repeatable Read): 解决重复读
    - 序列化(Serializable): 解决幻读
 
-5. 类型区别:
+5. 触发器使用
+
+6. 存储过程使用
+
+7. 数据库连接池的作用
+
+   - 限定数据库连接的个数, 不会导致由于数据库连接过多导致系统运行缓慢或崩溃
+   - 数据库连接不需要每次都去创建或销毁, 节约了资源
+   - 数据库连接不用每次都创建, 响应时间更快
+
+8. 类型区别:
 
    - char 和 varchar 区别:
      - char: 固定长度类型. 效率高但是占用空间(最大长度255), 会去掉尾部多余的空格
@@ -1228,7 +1930,7 @@
 
    - TIMESTAMP 和 DATETIME 区别:
 
-     - TIMESTAMP: 占用 4 字节,  自动更新, 不能为 NULL, 该类型在第一次插入列数据和更新列数据时都会自动更新.
+     - TIMESTAMP: 占用 4 字节,  自动更新, 默认不能为 NULL, 该类型在第一次插入列数据和更新列数据时都会自动更新.
      - DATETIME: 占用 8 字节, 可以为 NULL, 范围为 1001-9999, 底层采用整数存储, 整数二进制对应格式为 YYYYMMDDHHMMSS
 
    - BLOB 和 TEXT:
@@ -1264,11 +1966,11 @@
        RENAME TABLE my_summary TO my_summary_old, my_summary_new TO my_summary -- 该操作为原子操作
        ```
 
-6. MySQL 行锁和表锁:
+9. MySQL 行锁和表锁:
    - 表级锁: 开销小, 加锁快, 不会出现死锁. 锁定粒度大,  发生锁冲突概率高, 并发量最低(解决幻读).
    - 行级锁: 开销小, 加锁慢, 会出现死锁. 锁粒度小, 发生锁冲突概率低, 并发度最高(解决重复读).
 
-7. 数据库优化措施:
+10. 数据库优化措施:
 
    - 表设计优化:
 
@@ -1302,7 +2004,7 @@
 
      - 使用缓存: ORM 框架层缓存, Redis 缓存等
 
-     - 采用读写分离的措施:
+     - 采用读写分离的措施: 一个数据库用于数据写入, 其余同步的数据库用于数据读取
 
      - 垂直拆分
 
@@ -1346,216 +2048,216 @@
 
        - 定位慢查询. 
 
-8. 索引:
+11. 索引:
 
-   - 类型:
-     - 按数据结构实现: Hash 索引, B+ 树索引, 全文索引
-     - 按是否是主键索引: 聚集索引(Clustered Index), 二级索引(Secondery Index, 二级的原因是该索引会保留对应行的主键, 然后根据主键再去聚集索引中找到指向实际数据的指针, 因此称为二级索引)
-     - 按查询数据: 覆盖索引(Covering Index, 覆盖的意思是覆盖了插叙所需要的数据, 因此不需要从磁盘中去读取行的数据了)
-     - 按建立索引的列: 单列索引, 多列索引
+    - 类型:
+      - 按数据结构实现: Hash 索引, B+ 树索引, 全文索引
+      - 按是否是主键索引: 聚集索引(Clustered Index), 二级索引(Secondery Index, 二级的原因是该索引会保留对应行的主键, 然后根据主键再去聚集索引中找到指向实际数据的指针, 因此称为二级索引)
+      - 按查询数据: 覆盖索引(Covering Index, 覆盖的意思是覆盖了插叙所需要的数据, 因此不需要从磁盘中去读取行的数据了)
+      - 按建立索引的列: 单列索引, 多列索引
 
-   - 索引匹配: 最左匹配原则
+    - 索引匹配: 最左匹配原则
 
-     - 全部匹配
-     - 匹配部分列
-     - 匹配某列的部分
-     - 匹配某列全部, 再匹配某列部分
+      - 全部匹配
+      - 匹配部分列
+      - 匹配某列的部分
+      - 匹配某列全部, 再匹配某列部分
 
-   - 索引提高查询速度原理:
+    - 索引提高查询速度原理:
 
-     - 减少服务器访问数据的数量
-     - 避免排序和使用临时表
-     - 将随机 IO 转化为线性 IO 
+      - 减少服务器访问数据的数量
+      - 避免排序和使用临时表
+      - 将随机 IO 转化为线性 IO 
 
-   - 执行计划分析:(参见 MySQL 手册第 8.8.2)
+    - 执行计划分析:(参见 MySQL 手册第 8.8.2)
 
-     ```sql
-     -- actor_id 和 film_id 上有索引
-     EXPLAIN SELECT fild_id, actor_id
-               FROM film_actor
-              WHERE actor_id = 1
-                 OR film_id = 1
-     ```
+      ```sql
+      -- actor_id 和 film_id 上有索引
+      EXPLAIN SELECT fild_id, actor_id
+                FROM film_actor
+               WHERE actor_id = 1
+                  OR film_id = 1
+      ```
 
-     在执行计划结果中的 `type` 类型为 `index_merge`,  `Extra` 字段会有 `Using union(PRIMARY, idx_fk_film_id); Using where`.  MySql 采用每个索引对表进行扫描, 然后将两个结果合并在一起.
+      在执行计划结果中的 `type` 类型为 `index_merge`,  `Extra` 字段会有 `Using union(PRIMARY, idx_fk_film_id); Using where`.  MySql 采用每个索引对表进行扫描, 然后将两个结果合并在一起.
 
-     - 若 `Extra` 结果为 `Using intersect(idx_age,idx_name); Using where; Using index`, 则表明 `age` 和 `name` 需要一个联合的索引
-     - 若 `Extra` 结果为 `Using union(idx_name,idx_age); Using where`, 则需要注意每个索引具有较高的选择性.
-     - 若 `Extra` 结果为 `Using Index` 表明 MySQL 直接使用索引获取数据, 而不需要读取行数据.
+      - 若 `Extra` 结果为 `Using intersect(idx_age,idx_name); Using where; Using index`, 则表明 `age` 和 `name` 需要一个联合的索引
+      - 若 `Extra` 结果为 `Using union(idx_name,idx_age); Using where`, 则需要注意每个索引具有较高的选择性.
+      - 若 `Extra` 结果为 `Using Index` 表明 MySQL 直接使用索引获取数据, 而不需要读取行数据.
 
-   - 使用索引策略:
+    - 使用索引策略:
 
-     * 行的访问类型: `EXPLAN` 输出中的 type 列, 包括: 全表扫描, 索引所描, 范围扫描,  唯一主键查询, 常量查询. 在 `EXPLAN`  中的 extra 列为 where 表明存储引擎层读取所有行数据, 然后将行数据返回给服务层, 然后服务层根据 where 条件将不需要的数据过滤掉. MySQL 使用 where 条件的三种方式:
-       * 索引下沉: 在索引查找阶段使用 where 条件过滤不需要的数据. 发生在存储引擎层.
-       * 在覆盖索引数据查询中使用 where 条件过滤索引中保存的数据而不需要去读取行数据. 发生在服务器层(Using index in extra column).
-       * 从磁盘读取行数据后, 然后使用 where 条件过滤数据. 发生在服务层(Using where in extra column).
+      * 行的访问类型: `EXPLAN` 输出中的 type 列, 包括: 全表扫描, 索引所描, 范围扫描,  唯一主键查询, 常量查询. 在 `EXPLAN`  中的 extra 列为 where 表明存储引擎层读取所有行数据, 然后将行数据返回给服务层, 然后服务层根据 where 条件将不需要的数据过滤掉. MySQL 使用 where 条件的三种方式:
+        * 索引下沉: 在索引查找阶段使用 where 条件过滤不需要的数据. 发生在存储引擎层.
+        * 在覆盖索引数据查询中使用 where 条件过滤索引中保存的数据而不需要去读取行数据. 发生在服务器层(Using index in extra column).
+        * 从磁盘读取行数据后, 然后使用 where 条件过滤数据. 发生在服务层(Using where in extra column).
 
-     - 查询的时的索引列不能是表达式的一部分或者在函数里面
+      - 查询的时的索引列不能是表达式的一部分或者在函数里面
 
-       ```sql
-       SELECT actor_id FROM actor WHERE actor_id + 1 = 5;
-       SELECT ... WHERE TO_DAYS(CURRENT_DATE) - TO_DAYS(date_col) <= 10;
-       ```
+        ```sql
+        SELECT actor_id FROM actor WHERE actor_id + 1 = 5;
+        SELECT ... WHERE TO_DAYS(CURRENT_DATE) - TO_DAYS(date_col) <= 10;
+        ```
 
-     - 可以在较长列的一部分长度上建立索引, 建立索引时要注意索引的选择性(与众不同的索引值占总的索引值的比例)
+      - 可以在较长列的一部分长度上建立索引, 建立索引时要注意索引的选择性(与众不同的索引值占总的索引值的比例)
 
-     - 多列索引:
+      - 多列索引:
 
-       多列索引的顺序表示索引在排序的时候先按照第一列进行排序, 然后再按照第二列, 第三列进行排序. 在建立多列索引时, 将具有最大选择性的索引进行放在前面.
+        多列索引的顺序表示索引在排序的时候先按照第一列进行排序, 然后再按照第二列, 第三列进行排序. 在建立多列索引时, 将具有最大选择性的索引进行放在前面.
 
-       在排序的时候使用多列索引: 假设现在有多列索引 `(rental_date, inventory_id, customer_id)`, 原则是前面的列进行了排序才能使用后面的列进行排序.
+        在排序的时候使用多列索引: 假设现在有多列索引 `(rental_date, inventory_id, customer_id)`, 原则是前面的列进行了排序才能使用后面的列进行排序.
 
-       ```sql
-       -- 能够使用索引排序的情况
-       SELECT rental_id, staff_id 
-         FROM rental
-        WHERE rental_date = '2005-05-25' -- 因为这里第一个索引列为常量
-        ORDER BY inventory_id, customer_id;
-        
+        ```sql
+        -- 能够使用索引排序的情况
         SELECT rental_id, staff_id 
-         FROM rental
-        WHERE rental_date > '2005-05-25' 
-        ORDER BY rental_date, inventory_id; -- 注意这里
-        
-        -- 不能使用索引排序
+          FROM rental
+         WHERE rental_date = '2005-05-25' -- 因为这里第一个索引列为常量
+         ORDER BY inventory_id, customer_id;
+         
          SELECT rental_id, staff_id 
-           FROM rental
-          WHERE rental_date > '2005-05-25' 
-          ORDER BY rental_date DESC, inventory_id ASC; -- 这里排序方式不同
-          SELECT rental_id, staff_id 
-           FROM rental
-          WHERE rental_date > '2005-05-25' 
-          ORDER BY inventory_id, staff_id; -- 这里引用了没有索引的列
-          SELECT rental_id, staff_id 
-           FROM rental
-          WHERE rental_date = '2005-05-25' 
-          ORDER BY customer_id; -- 这里没有构成最左匹配原则
-          
+          FROM rental
+         WHERE rental_date > '2005-05-25' 
+         ORDER BY rental_date, inventory_id; -- 注意这里
+         
+         -- 不能使用索引排序
           SELECT rental_id, staff_id 
             FROM rental
            WHERE rental_date > '2005-05-25' 
-           ORDER BY inventory_id, customer_id; -- 注意这里日期是一个范围
+           ORDER BY rental_date DESC, inventory_id ASC; -- 这里排序方式不同
+           SELECT rental_id, staff_id 
+            FROM rental
+           WHERE rental_date > '2005-05-25' 
+           ORDER BY inventory_id, staff_id; -- 这里引用了没有索引的列
+           SELECT rental_id, staff_id 
+            FROM rental
+           WHERE rental_date = '2005-05-25' 
+           ORDER BY customer_id; -- 这里没有构成最左匹配原则
+           
+           SELECT rental_id, staff_id 
+             FROM rental
+            WHERE rental_date > '2005-05-25' 
+            ORDER BY inventory_id, customer_id; -- 注意这里日期是一个范围
+         
+        ```
+
+      - 分页时使用延迟 JOIN:
+
+        ```sql
+        SELECT <cols> 
+          FROM profiles 
+         WHERE sex='M'
+         ORDER BY rating
+         LIMIT 100000,10 -- 这样会很慢
+         -- 使用延迟 JOIN
+         SELECT <cols>
+           FROM profiles
+                INNER JOIN(
+                	SELECT <primary key cols>
+                      FROM profiles
+                     WHERE sex = 'M'
+                     ORDER BY rating
+                     LIMIT 100000, 10
+                ) AS x
+                        ON profiles.id = x.id
+        ```
+
+    - JOIN 优化
+
+      MySQL 会优化访问 `JOIN` 表的顺序, 也就是说写在前面的表不一定被先访问. 在 `JOIN` 操作后的 `ORDER BY` 的时候如果字段是第一个被访问的表的字段, MySQL 可以先将该表 filesort, 然后再进行 `JOIN` 操作, 得到的结果就已经是排好序的了, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using Index`; 相反如果排序的字段不是第一个被访问的表的字段, 那么就需要对 join 后的结果进行排序, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using index; Using temporary; Using filesort`
+
+    - COUNT() 优化
+
+      COUNT(*) 不带 WHERE 条件非常快, 因为存储引擎知道一张表里面有多少行数据.	
+
+      ```sql
+      -----------优化案例1------------
+      -- 该查询会扫描很多行的数据
+      SELECT COUNT(*)
+        FROM City
+       WHERE ID > 5;
+       -- 优化之后只需要扫描 5 行数据
+       SELECT (SELECT COUNT(*) FROM City) - COUNT(*)
+         FROM City 
+        WHERE ID <= 5; -- 子查询是一个常量
         
-       ```
+      -------------------优化案例2---------------
+      SELECT SUM(IF(color = 'blue', 1, 0)) AS 'blue'
+      	   SUM(IF(color = 'red', 1, 0)) AS 'red'
+        FROM items;
+      -- 优化方式 1
+      SELECT COUNT(color = 'blue') AS 'blue'
+      	   COUNT(color = 'red') AS 'red'
+        FROM items;
+        -- 优化方式 1
+      SELECT COUNT(color = 'blue' OR NULL) AS 'blue'
+             COUNT(color = 'red' OR NULL) AS 'red'
+        FROM items;   
+      ```
 
-     - 分页时使用延迟 JOIN:
+    - GROUP BY 优化
 
-       ```sql
-       SELECT <cols> 
-         FROM profiles 
-        WHERE sex='M'
-        ORDER BY rating
-        LIMIT 100000,10 -- 这样会很慢
-        -- 使用延迟 JOIN
-        SELECT <cols>
-          FROM profiles
-               INNER JOIN(
-               	SELECT <primary key cols>
-                     FROM profiles
-                    WHERE sex = 'M'
-                    ORDER BY rating
-                    LIMIT 100000, 10
-               ) AS x
-                       ON profiles.id = x.id
-       ```
-
-   - JOIN 优化
-
-     MySQL 会优化访问 `JOIN` 表的顺序, 也就是说写在前面的表不一定被先访问. 在 `JOIN` 操作后的 `ORDER BY` 的时候如果字段是第一个被访问的表的字段, MySQL 可以先将该表 filesort, 然后再进行 `JOIN` 操作, 得到的结果就已经是排好序的了, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using Index`; 相反如果排序的字段不是第一个被访问的表的字段, 那么就需要对 join 后的结果进行排序, 反应在 `Explain` 执行计划中就是 `Extra` 字段为 `Using index; Using temporary; Using filesort`
-
-   - COUNT() 优化
-
-     COUNT(*) 不带 WHERE 条件非常快, 因为存储引擎知道一张表里面有多少行数据.	
-
-     ```sql
-     -----------优化案例1------------
-     -- 该查询会扫描很多行的数据
-     SELECT COUNT(*)
-       FROM City
-      WHERE ID > 5;
-      -- 优化之后只需要扫描 5 行数据
-      SELECT (SELECT COUNT(*) FROM City) - COUNT(*)
-        FROM City 
-       WHERE ID <= 5; -- 子查询是一个常量
-       
-     -------------------优化案例2---------------
-     SELECT SUM(IF(color = 'blue', 1, 0)) AS 'blue'
-     	   SUM(IF(color = 'red', 1, 0)) AS 'red'
-       FROM items;
-     -- 优化方式 1
-     SELECT SUM(color = 'blue') AS 'blue'
-     	   SUM(color = 'red') AS 'red'
-       FROM items;
-       -- 优化方式 1
-     SELECT COUNT(color = 'blue' OR NULL) AS 'blue'
-            COUNT(color = 'red' OR NULL) AS 'red'
-       FROM items;   
-     ```
-
-   - GROUP BY 优化
-
-     ```sql
-     SELECT actor.first_name, actor.last_name, COUNT(*)
-       FROM film_actor
-            INNER JOIN actor USING(actor_id)
-      GROUP BY actor.first_name, actor.last_name
-      --前提条件是 actor.first_name, actor.last_name 唯一对应一个 id
+      ```sql
       SELECT actor.first_name, actor.last_name, COUNT(*)
-       FROM film_actor
-            INNER JOIN actor USING(actor_id)
-      GROUP BY actor.actor_id
-     ```
+        FROM film_actor
+             INNER JOIN actor USING(actor_id)
+       GROUP BY actor.first_name, actor.last_name
+       --前提条件是 actor.first_name, actor.last_name 唯一对应一个 id
+       SELECT actor.first_name, actor.last_name, COUNT(*)
+        FROM film_actor
+             INNER JOIN actor USING(actor_id)
+       GROUP BY actor.actor_id
+      ```
 
-9. 常用命令
+12. 常用命令
 
-   - 获取版本
+    - 获取版本
 
-     ```sql
-     select version();
-     ```
+      ```sql
+      select version();
+      ```
 
-   - 查看表结构
+    - 查看表结构
 
-     ```sql
-     describe tableName
-     ```
+      ```sql
+      describe tableName
+      ```
 
-   - 查看创建表的脚本
+    - 查看创建表的脚本
 
-     ```sql
-     -- 该脚本可以查看创建表时的默认选项
-     show create table tableName
-     ```
+      ```sql
+      -- 该脚本可以查看创建表时的默认选项
+      show create table tableName
+      ```
 
-   - 查看存储过程
+    - 查看存储过程
 
-     ```sql
-     SHOW PROCEDURE STATUS 
-              WHERE db = 'high_performance_mysql';
-     
-     SELECT `name` 
-       FROM mysql.proc 
-      WHERE db = 'high_performance_mysql' 
-        AND `type` = 'PROCEDURE'
-     ```
+      ```sql
+      SHOW PROCEDURE STATUS 
+               WHERE db = 'high_performance_mysql';
+      
+      SELECT `name` 
+        FROM mysql.proc 
+       WHERE db = 'high_performance_mysql' 
+         AND `type` = 'PROCEDURE'
+      ```
 
-   - 查看执行时间
+    - 查看执行时间
 
-     ```sql
-     SET profiling=1
-     -- 需要开启
-     SHOW PROFILES;
-     -- 查询单个语句执行
-     SHOW PROFILE FOR QUERY 1;
-     ```
+      ```sql
+      SET profiling=1
+      -- 需要开启
+      SHOW PROFILES;
+      -- 查询单个语句执行
+      SHOW PROFILE FOR QUERY 1;
+      ```
 
-   - 查看连接数
+    - 查看连接数
 
-     ```sql
-     SHOW PROCESSLIST;
-     ```
+      ```sql
+      SHOW PROCESSLIST;
+      ```
 
-10. 参考:
+13. 参考:
 
    [1] : [MySQL到底有多少种日志类型需要我们记住的！](<https://database.51cto.com/art/201806/576300.htm>)
 
@@ -1725,14 +2427,46 @@
      - skiplist(跳表): 
    - 使用场景: 排行榜系统, 例如根据点赞个数来排名
 
-8. 优化执行操作:
+8. 内存管理
+
+   - 通过 `maxmemory` 设置最大内存大小, 通过 `config set maxmemory 6G` 动态调整内存大小.
+   - 内存回收策略
+     - 删除到达过期时间的键对象
+     - 内存达到 `maxmemory` 上限时触发内存溢出控制策略
+       - noevication: 默认策略, 不会删除任何数据, 拒绝所有写入操作并返回客户端错误信息.
+       - volatile-lru:  根据 LRU 算法删除设置了超时属性的键, 直到腾出足够空间为止. 如果没有可删除的键对象, 回退到 `noeviction` 策略.
+       - allkeys-lru: 根据 LRU 算法删除键, 不管数据有没有设置超时属性, 直到腾出足够空间为止.
+       - allkeys-random: 随机删除所有键, 直到腾出足够空间为止.
+       - volatile-random: 随机删除过期键, 直到腾出足够空间为止.
+       - volatile-ttl: 根据键值对象的 ttl 属性, 删除最近将要过期数据. 如果没有, 回退到 `noeviction` 策略.
+
+9. 优化执行操作:
 
    - 管道技术: 将多个命令组合, 通过一次请求发送给服务器, 然后将执行结果按顺序返回给客户端. 管道命令和原生批处理命令的区别在于原生批处理命令是原子性的.
    - 事务功能:
      - mult, exec, discard, Redis 事务不支持回滚功能, 使用 watch 命令来判断在事务执行之前没有被其它事务修改.
      - eval 命令执行 Lua 脚本来实现事务的功能
 
-9. 参考:
+10. 持久化
+
+    - RDB
+
+      把当前进程数据生成快照保存到硬盘的过程. 触发 RDB 持久化分为手动触发和自动触发.
+
+      - 命令: save, bsave
+      - 触发时机
+        - 使用 save m n 命令, 表示 m 秒内数据集存在 n 次修改时, 自动触发 bsave
+        - 从节点执行全量复制操作, 主节点自动执行 bgsave 生成 RDB 文件发送给从节点
+        - 执行 debug reload 命令重新加载 Redis 时, 也会自动触发 save 操作
+        - 默认情况下执行 shutdown 命令, 自动执行 bsave
+
+    - AOF
+
+      以独立日志的方式记录每次写命令, 重启时再重新执行 AOF 文件中的命令达到恢复数据的目的. AOF 主要解决了数据持久化的实时性.
+
+      
+
+11. 参考:
 
    [1] : [Redis分布式锁的正确实现方式（Java版）](<https://wudashan.cn/2017/10/23/Redis-Distributed-Lock-Implement/>)
 
@@ -1744,10 +2478,16 @@
    - 抢购活动, 削峰填谷, 防止系统崩塌
    - 延迟消息处理
    - 解耦系统
+
 2. RabbitMQ 重要角色:
    - 生产者: 消息的创建者, 负责创建和推送数据的到消息服务器
+     - 消息
+       - 消息体
+       - 标签: 交换器和路由键
    - 消费者: 消息的接收方, 用于处理数据和确认消息
+     - 消费端可以通过推或拉的模式消费消息
    - 服务器: 就是 RabbitMQ 本身
+
 3. RabbitMQ 重要组件:
    - ConnectionFactory(连接管理器): 应用程序与 Rabbit 之间建立的管理器.
    - Channel(信道): 消息推送使用的通道.
@@ -1755,7 +2495,15 @@
    - Queue(队列): 用于存储生产者的消息.
    - RoutingKey(路由键): 用于把生产者的数据分配到交换器上.
    - BindingKey(绑定键): 用于把交换器的消息绑定到队列上.
-4. 交换器类型:
+
+4. 队列
+
+   当消息在一个队列中变成死信之后, 它能被重新发送到另一个交换器中, 这个交换器就是 DLX, 绑定 DLX 的队列就称为死信队列.
+
+   - 延迟队列实现: 消费者订阅死信队列, 当消息在正常队列中过期之后被存放到这个死信队列中, 消费者消费到这个消息, 以实现延迟接收消息的目的.
+   - 
+
+5. 交换器类型:
    - fanout: 它会把所有发送到该交换器的消息路由到所有与该交换器绑定的队列中
    - direct: 它把消息路由到那些 BindKey 和 RoutingKey 完全匹配的队列中
    - topic:  它可以采用通配符的方式来匹配.
@@ -1958,4 +2706,88 @@
      }
      ```
 
-     
+------
+
+#### MyBatis
+
+1. #{} 和 ${} 区别
+
+   - #{} 解析传递进来的参数, #{} 是预编译处理
+   - ${} 对传递进来的参数原样拼接在 SQL 中, 是字符串替换
+
+2. 实例类属性名和表字段名不一样处理方法
+
+   - 在 SQL 语句中定义字段的别名, 使得该别名和实体类名称相同
+   - 通过在<resultMap>中配置属性名和字段名的映射关系
+
+3. 获取自增主键
+
+   - 在插入的 XML 语句中配置 `useGeneratdKeys=true` 和 `keyProperty="id"` MyBatis 会使用 JDBC 的 `getGeneratedKeys` 方法取出由数据库内部生成的主键, 获得主键后将其赋值给 keyProperty 配置的 id 属性. 
+
+4. 传递多个参数
+
+   - 使用 @Param 注解给参数命名
+   - 使用 Map
+
+5. MyBatis 动态 SQL
+
+   使用OGNL从sql参数对象中计算表达式的值，**根据表达式的值动态拼接sql，以此来完成动态sql的功能**.
+
+   - if, choose, where, set, foreach, bind
+
+   - where: 如果标签包含的元素中有返回值, 就插入一个 where, 如果 where 后面的字符串是以 AND 或 OR 开头, 就将它们剔除.
+
+   - set: 如果标签包含的元素有返回值, 就插入一个 set, 如果 set 后面的字符串是以逗号结尾的, 就将这个逗号剔除.
+
+   - foreach
+
+     ```xml
+     <!--foreach 实现 in-->
+     <foreach collection="list" open="(" close=")" separator="," item="id" index="i">
+     	#{id}
+     </foreach>
+     <!--foreach 实现批量插入-->
+     INSERT INTO user
+     	 VALUES
+     <foreach collection="list" item="user" separator=",">
+     	(
+         	#{user.id},
+         	#{user.name}
+         )
+     </foreach>
+     ```
+
+   - bind
+
+     ```xml
+     <bind name="userNameLike" value=" '%' +userName + '%' "
+     ```
+
+6. Mapper 接口实现原理
+
+   Mapper 接口中的方法是不能重载的, 因为查找时是通过全限定名+方法名作为 key 进行查找的. 实现原理是通过动态代理生成接口的代理对象, 然后以 SqlSession 作为方法调用者调用该方法, 然后通过调用 SqlSession 中的 Executor 方法, 而在 Executor 方法中调用 JDBC 实现.
+
+7. SqlSession 下的四大对象
+
+   - Executor: 真正执行 Java 与数据库交互的对象
+     - SimpleExecutor：每执行一次update或select，就开启一个Statement对象，**用完立刻关闭Statement对象**。
+     - ReuseExecutor：执行update或select，以sql作为key查找Statement对象，存在就使用，不存在就创建，用完后，不关闭Statement对象，而是放置于Map<String, Statement>内，供下一次使用。简言之，**就是重复使用Statement对象**。
+     - BatchExecutor：执行update（没有select，JDBC批处理不支持select），将所有sql都添加到批处理中（addBatch()），等待统一执行（executeBatch()），**它缓存了多个Statement对象，每个Statement对象都是addBatch()完毕后，等待逐一执行executeBatch()批处理。与JDBC批处理相同**。
+   - StatementHandler: 处理数据库会话
+   - ParameterHander: 参数处理器, 对预编译语句进行参数处理
+   - ResultSetHandler: 结果映射器, 将数据库查询结果封装为实体类
+   - StatementHandler#prepared() 预编译 SQL, parameterize() 设置参数(通过调用 ParameterHandler), query(), update() 执行 SQL(通过调用 ResultSetHandler 组装对象) 
+
+8. MyBatis 延迟加载
+
+   - MyBatis 支持 association 关联对象和 collection 关联集合对象的延迟加载. 在配置文件 `lazyLoadingEnabled` 和 XML 中的 `fetchType` 配置项配置.  实现原理是使用 `CGLIB` 创建目标对象的代理对象, 当调用目标方法时, 进入拦截器方法, 发现目标为空时, 则调用相关查询语句给目标赋值, 然后再返回.
+
+9. 插件运行原理
+
+   - 实现 Interceptor, 并采用 @Signature 注解标注要拦截的方法签名. 在初始化组件时例如 Executor, 为该对象生成动态代理对象(这个时候会验证插件的注解的标注与该对象的方法是否一致), 多个动态代理对象生成一个插件链的结构. 
+
+10. 参考
+
+    [1] : [Mybatis常见面试题](https://segmentfault.com/a/1190000013678579)
+
+    [2] : [复习Mybatis框架，面试题](<https://zhuanlan.zhihu.com/p/60257737>)
