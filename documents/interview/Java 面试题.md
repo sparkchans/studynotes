@@ -1273,7 +1273,7 @@
 
 6. TCP 四次挥手:
 
-    - 第一次挥手(SYN=1, seq=u):
+    - 第一次挥手(FIN=1, seq=u):
 
         客户端应用进程发送 TCP 连接释放报文, 此时 FIN=1, seq=u, 客户端进入 `FIN-WAIT-1`(FIN 报文段即使不携带数据, 也要消耗掉一个序号)
 
@@ -1429,7 +1429,7 @@
       ApplicationContext ctx = new ClassPathXmlApplicationContext( "/applicationcontext.xml ");
       ```
 
-    - XmlWebApplicationContext：该容器会在一个 web 应用程序的范围内加载在 XML 文件中已被定义的 bean(这个需要理解一下).
+    - XmlWebApplicationContext：该容器会在一个 web 应用程序的范围内加载在 XML 文件中已被定义的 bean(在 ContextLoadListener 中会启动该上下文作为 Spring IOC 上下文).
 
 9. Resource 加载使用
 
@@ -1473,7 +1473,7 @@
 
 12. Spring 自动装配:
 
-     - no: 没有自动装配, 应该用显示 bean 引用进行装配.
+     - no: 没有自动装配, 通过手工设置ref 属性来进行装配bean.
      - byName: 根据 bean 的名称注入对象依赖项.
      - byType: 根据类型注入对象依赖项.
      - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
@@ -1673,7 +1673,52 @@
 
      ![](./asserts/SpringMVC.PNG)
 
-18. Spring JSP 视图渲染过程:
+18. SpringMVC  上下文
+
+     Spring IOC 是一个独立的模块, 它并不是直接在 Web 容器中发挥作用的, 如果要在 Web 环境中使用 IOC 容器, 需要 Spring 为 IOC 设计一个启动过程, 把 IOC 容器导入, 并在 Web 容器中建立起来. 在这个过程中, 一方面处理 Web 容器的启动, 另一方面通过设计特定 Web 容器拦截器, 将 IOC 容器载入到 Web 环境中, 并将其初始化. 在这个过程建立完成以后, IOC 容器才能正常工作, 而 SpringMVC 是建立在 IOC 容器基础上的.
+
+     
+
+     - Spring IOC 上下文: 加载应用中的其它 Bean
+
+         在 ContextListener(实现 ServletContextListener) 中初始化. ContextListener 通过监听 Web 容器的生命周期变化去初始化 Spring IOC 上下文. 这个上下文存放在 ServletContext 这个上下文中.
+
+     - 映射请求上下文: 加载包含 Web 组件的 Bean, 例如控制器, 视图解析器以及处理器映射
+
+19. SpringMVC 配置:
+
+     - 配置 DispatcherServlet(SpringMVC 的前端控制器), 容器会在类路径查找 ServletContainerInitializer 接口的实现类来配置 DispatcherServlet, Spring 提供了 SpringServletContainerInitializer 作为实现类, 该类又会去查找实现 WebApplicationInitializer 的实现类, Spring 提供了AbstractAnnotationConfigDispatcherServletInitilizer 实现(可以通过实现该类来配置 Servlet).
+
+         DispatcherServlet 的配置声明在 WebConfig 中, 而根配置定义在 RootConfig 中.
+
+         ```java
+         // DispatcherServlet 上下文配置
+         @Configuration
+         @EnableWebMvc
+         @ComponentScan("spitter.web") // 这个配置的是 @Controller 注解修饰的控制器的位置
+         public class WebConfig extends WebMvcConfigurerAdapter {
+             @Bean
+             public ViewResolver viewResolver() {
+                 InternalViewResolver resolver = new InternalViewResolver();
+                 resolver.setPrefix("/WEB-INF/views");
+                 resolver.setSuffix(".jsp");
+                 return resolver;
+             }
+             
+             @Override
+             public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configure) {
+                 configurer.enable();
+             }
+         }
+         // Spring 应用上下文配置
+         @Configuration
+         @ComponentScan(basePackages={"spitter"}, excludeFilters={@Filter(type=FilterType.ANNOTATION, value=EnableWebMvc.class)}) 
+         public class RootConfig {
+             
+         }
+         ```
+
+20. Spring JSP 视图渲染过程:
 
         * `InternalResourceView#render()`方法
 
@@ -1689,7 +1734,7 @@
 
         然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
 
-19. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
+21. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
 
         - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
         - ModelMethodProcessor: 处理返回值为 Model
@@ -1709,7 +1754,7 @@
 
         
 
-20. 参考
+22. 参考
 
      [1] : [彻底搞明白Spring中的自动装配和Autowired](https://juejin.im/post/5c84b5285188257c5b477177)
 
@@ -1729,9 +1774,65 @@
 
      [6] : [Spring AOP,AspectJ, CGLIB 有点晕](<https://www.jianshu.com/p/fe8d1e8bd63e>)
 
+     [7] : [Spring auto wire（自动装配） 的 五种方式](<https://blog.csdn.net/topwqp/article/details/8686025>)
+
 ------
 
+#### Spring Security
 
+1. 实现原理: 基于 Spring AOP 和 Servlet 规范中的 Filter 实现的安全框架, 能够在 Web 请求级别和方法调用级别处理身份认证和授权. 通过 DelegatingFilterProxy 将请求委托给 FilterChainProxy.
+
+2. 配置方式
+
+   - web.xml 配置
+
+     ```xml
+     <filter>
+     	<filter-name>springSecurityFilterChain</filter-name>
+         <filter-class>
+         	org.springframework.web.filter.DelegatingFilterProxy
+         </filter-class>
+     </filter>
+     ```
+
+   - Java 方式
+
+     ```java
+     // Spring 会发现它, 并向 Web 容器注册 DelegatingFilterProxy
+     public class SecurityWebInitializer extends AbstractSecurityWebApplicationInitializer {
+         
+     }
+     ```
+
+     
+
+     ```java
+     @Configuration
+     @EnableWebMvcSecurity
+     public class SecurityConfig extends WebSecurityConfigurerAdapter {
+         @Override
+         protected void configure(HttpSecurity http) throws Exception {
+             http
+                 .authorizeRequets()
+                 	.anyRequest().authenticated()
+                 	.and()
+                 .formLogin()
+                 	.and()
+                 .httpBasic();
+                 
+         }
+         
+         @Override
+         protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+             auth.inMemoryAuthentication()
+                 .withUser("user").password("password").roles("USER");
+         }
+     }
+     ```
+
+     
+
+------
 
 #### Spring  Boot/Cloud:
 
