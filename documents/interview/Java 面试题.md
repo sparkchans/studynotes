@@ -1721,38 +1721,39 @@
 20. Spring JSP 视图渲染过程:
 
         * `InternalResourceView#render()`方法
-
+        
         * `Application#forward()`方法
-
+        
         * `ApplicationFilterChain#doFilter()`方法
-
+        
         * `JspServlet.service()`方法
-
+        
         * `JspCompilationContext.compile()`方法
-
+        
         * `eclipse.Compiler.compile()`方法
-
+        
         然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
 
 21. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
 
-        - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
-        - ModelMethodProcessor: 处理返回值为 Model
-        - ViewMethodReturnValueHandler: 处理返回值为 View
-        - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
-        - StreamingResponseBodyReturnValueHandler: 
-        - HttpEntityMethodProcessor
-        - HttpHeadersReturnValueHandler
-        - CallableMethodReturnValueHandler
-        - DeferredResultMethodReturnValueHandler
-        - AsyncTaskMethodReturnValueHandler
-        - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
-        - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
-        - ViewNameMethodReturnValueHandler: 处理直接返回String类型
-        - MapMethodProcessor: 处理返回Map类型
-        - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+         - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
+         - ModelMethodProcessor: 处理返回值为 Model
+         - ViewMethodReturnValueHandler: 处理返回值为 View
+         - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
+         - StreamingResponseBodyReturnValueHandler: 
+         - HttpEntityMethodProcessor
+         - HttpHeadersReturnValueHandler
+         - CallableMethodReturnValueHandler
+         - DeferredResultMethodReturnValueHandler
+         - AsyncTaskMethodReturnValueHandler
+         - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+         - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
+         - ViewNameMethodReturnValueHandler: 处理直接返回String类型
+         - MapMethodProcessor: 处理返回Map类型
+         - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
 
-        
+
+     ​    
 
 22. 参考
 
@@ -2171,6 +2172,72 @@
       - 将随机 IO 转化为线性 IO 
 
     - 执行计划分析:(参见 MySQL 手册第 8.8.2)
+
+      - select_type:
+
+        ```sql
+        EXPLAIN 
+        SELECT * FROM `actor` WHERE id = 1
+        UNION 
+        SELECT * FROM `actor` WHERE id = 2
+        -- 这里第一个 SELECT 的 select_type 为 PRIMARY, 代表最外层的 SELECT
+        -- 第二个 SELECT 的 select_type 为 UNION, 代表它是 UNION 后面的 SELECT
+        -- 第三个 SELECT 的 select_type 为 UNION RESULT, 代表它是 从 UNION RESULT 从获取数据的
+        ```
+
+        ![](./asserts/select-type.PNG)
+
+        ```sql
+        -- 这里第一个 SELECT 的 select_type 为 PRIMARY, 代表最外层的 SELECT
+        -- 第二个 SELECT 的 select_type 为 SUBQUERY, 代表里面的
+        EXPLAIN 
+        SELECT * FROM actor 
+        WHERE EXISTS (SELECT id FROM person)
+        ```
+
+        ![](./asserts/select-type2.PNG)
+
+      - type: 主要表示依据什么来将行数据从存储引擎层读取到服务层
+
+        ```sql
+        -- 这里 type 为 constant, 当你比较 primary key 或 unique 索引和一个常量时
+        EXPLAIN SELECT * FROM person WHERE id = 1
+        ```
+
+        ![](F:\studynotes\documents\interview\asserts\type.PNG)
+
+        ```sql
+        -- 这里第一个 type 为 ALL, 表示扫描第一个表的所有数据
+        -- 这里第二个 type 为 eq_ref, 当索引为 unique 或 primary key 时, 并且使用了该索引的所有部分(针对多列索引来说), 这是最好的 JOIN 类型了(也就是说第一张表的索引能够在第二张表里面找到才读取第二张表的行数据, 这也说明了 JOIN 的表只需要后面的表有索引即可).
+        EXPLAIN SELECT * FROM actor INNER JOIN person USING(id);
+        ```
+
+        ![](./asserts/type2.PNG)
+
+        ```sql
+        -- 这里第二个 type 为 ref, 意思是利用了多个索引从第二张表里面去扫描数据, 在索引类型为左部分匹配或者索引不是主键索引或唯一索引时使用.
+        EXPLAIN SELECT * FROM actor INNER JOIN person USING(`name`, age);
+        ```
+
+        ![](./asserts/type3.png)
+
+        ```sql
+        -- 这里 type 为 range, 表明只有在范围内的行数据才会被读取, 使用索引去过滤行数据
+        EXPLAIN SELECT * FROM actor WHERE age > 10 AND age < 100
+        ```
+
+        ![](./asserts/type4.png)
+
+        ```sql
+        -- 这里 type 为 index, 根据索引顺序去读取所有的行数据
+        EXPLAIN SELECT * FROM actor ORDER BY id
+        -- 这里 type 为 index, 表示相当于直接从索引中读到行数据
+        EXPLAIN SELECT age FROM actor WHERE age > 10 AND age < 100
+        ```
+
+        ![](./asserts/type5.png)
+
+        ![](./asserts/type6.png)
 
       ```sql
       -- actor_id 和 film_id 上有索引
