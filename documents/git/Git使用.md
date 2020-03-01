@@ -39,6 +39,8 @@
     ```shell
     # 将工作区的修改撤销
     git checkout -- filename
+    # 将工作区的新增的文件删除
+    git clean -xdf
     # 将暂存区的修改撤销
     git reset HEAD filename
     ```
