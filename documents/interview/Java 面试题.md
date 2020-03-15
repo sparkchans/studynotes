@@ -550,157 +550,159 @@
 
 11. synchronized 底层实现:
 
-     synchronized 是由一对 monitorenter/monitorexit 指令实现的, monitor 对象是同步实现的基本单元. 在 JDK 1.6 之前, 是依赖操作系统底层的排它锁来实现的, 这时需要从用户态切换到内核态, 这种转换需要消耗处理器的时间, 如果代码块中的内容过于简单, 状态切换的时间可能比用户代码执行的时间还要长.
+      synchronized 是由一对 monitorenter/monitorexit 指令实现的, monitor 对象是同步实现的基本单元. 在 JDK 1.6 之前, 是依赖操作系统底层的排它锁来实现的, 这时需要从用户态切换到内核态, 这种转换需要消耗处理器的时间, 如果代码块中的内容过于简单, 状态切换的时间可能比用户代码执行的时间还要长.
 
-     JDK 1.6 之后引入了偏向锁, 轻量级锁. 
+      JDK 1.6 之后引入了偏向锁, 轻量级锁. 
 
-     - 偏向锁: 是指一段同步代码一直被一个线程所访问, 那么该线程会自动获取锁, 降低获取锁的代价(解决锁的重入问题). 此时在对象头的 Mark Word 中存放获取锁的线程的 ID.
-     - 轻量级锁: 是指当锁是偏向锁时, 被另外的线程所访问, 偏向锁就会升级为轻量级锁, 其它线程会通过自旋的形式尝试获取锁, 不会阻塞, 从而提高性能(解决两个线程锁的竞争问题). 此时会在当前线程的栈帧中创建一个锁记录 (Lock Record) 的空间, 用于存储 Mark Word 的拷贝, 然后通过 CAS 操作尝试将对象的 Mark Word 更新为指向 Lock Record 的指针, 更新成功即表明该线程获取到锁.
-     - 重量级锁: 当两个锁参与竞争轻量级锁时, 通过自旋等待的线程超过一定的次数, 或者有第三个线程来竞争锁时, 轻量级锁会升级为重量级锁(这里的重量级指的是会通过系统调用来将线程挂起). 此时对象头的 Mark Word 指向重量级锁 (互斥量) 的指针.
+      - 偏向锁: 是指一段同步代码一直被一个线程所访问, 那么该线程会自动获取锁, 降低获取锁的代价(解决锁的重入问题). 此时在对象头的 Mark Word 中存放获取锁的线程的 ID.
+      - 轻量级锁: 是指当锁是偏向锁时, 被另外的线程所访问, 偏向锁就会升级为轻量级锁, 其它线程会通过自旋的形式尝试获取锁, 不会阻塞, 从而提高性能(解决两个线程锁的竞争问题). 此时会在当前线程的栈帧中创建一个锁记录 (Lock Record) 的空间, 用于存储 Mark Word 的拷贝, 然后通过 CAS 操作尝试将对象的 Mark Word 更新为指向 Lock Record 的指针, 更新成功即表明该线程获取到锁.
+      - 重量级锁: 当两个锁参与竞争轻量级锁时, 通过自旋等待的线程超过一定的次数, 或者有第三个线程来竞争锁时, 轻量级锁会升级为重量级锁(这里的重量级指的是会通过系统调用来将线程挂起). 此时对象头的 Mark Word 指向重量级锁 (互斥量) 的指针.
 
-     
+      
 
 12. 线程池的状态:
 
-      - RUNNING: 接受新的任务, 处理等待队列中的任务.
-      - SHUTDONW: 不接受新的任务提交, 但是会继续处理等待队列中的任务.
-      - STOP: 不接受新的任务提交, 不再处理等待队列中的任务, 中断正在执行任务的线程.
-      - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换为 TIDYING 状态时, 会执行钩子方法 `terminated()`.
-      - TERMINATED:  `terminated()` 方法结束后, 线程池的状态就会变成这个.
+       - RUNNING: 接受新的任务, 处理等待队列中的任务.
+       - SHUTDONW: 不接受新的任务提交, 但是会继续处理等待队列中的任务.
+       - STOP: 不接受新的任务提交, 不再处理等待队列中的任务, 中断正在执行任务的线程.
+       - TYDING: 所有任务都销毁了, workCount 为 0, 线程池的状态在转换为 TIDYING 状态时, 会执行钩子方法 `terminated()`.
+       - TERMINATED:  `terminated()` 方法结束后, 线程池的状态就会变成这个.
 
 13. 线程池:
 
-      * 原理: 
+       * 原理: 
 
-          传统的多线程是针对每一个任务都去创建一个线程, 创建线程会消耗系统的资源, 如果任务很多但是每个任务又都很小, 那么就会导致大量的系统资源被消耗和浪费. 而使用线程池则可以降低资源的消耗, 线程池将任务和线程的执行分隔开来, 使得一个线程可以获取多个任务来执行, 这样减少了创建线程的数量, 使用线程池可以带来如下的好处:
+           传统的多线程是针对每一个任务都去创建一个线程, 创建线程会消耗系统的资源, 如果任务很多但是每个任务又都很小, 那么就会导致大量的系统资源被消耗和浪费. 而使用线程池则可以降低资源的消耗, 线程池将任务和线程的执行分隔开来, 使得一个线程可以获取多个任务来执行, 这样减少了创建线程的数量, 使用线程池可以带来如下的好处:
 
-          * 降低资源的消耗: 通过重复利用已创建的线程降低线程创建和销毁造成的消耗.
-          * 提高相应速度: 当任务到达时, 任务可以不需要等到线程创建就能立即执行.
-          * 提高线程的可管理性: 可以同意分配, 调优和监控线程.
+           * 降低资源的消耗: 通过重复利用已创建的线程降低线程创建和销毁造成的消耗.
+           * 提高相应速度: 当任务到达时, 任务可以不需要等到线程创建就能立即执行.
+           * 提高线程的可管理性: 可以同意分配, 调优和监控线程.
 
-          当提交一个新任务到线程池时:
+           当提交一个新任务到线程池时:
 
-          * 线程池判断**核心线程池里的线程**是否都在执行任务. 如果不是, 则创建一个新的工作线程来执行任务. 如果是, 则进入下一个流程.
-          * 线程池判断工作队列是否已经满. 如果工作队列没有满, 则将新提交的任务存储在这个工作队列中. 如果满了, 则进入下一个流程.
-          * 线程池判断**线程池的线程**是否都处于工作状态. 如果没有, 则创建一个新的工作线程来执行任务. 如果满了, 则交给饱和策略来处理这个任务.
+           * 线程池判断**核心线程池里的线程**是否都在执行任务. 如果不是, 则创建一个新的工作线程来执行任务. 如果是, 则进入下一个流程.
+           * 线程池判断工作队列是否已经满. 如果工作队列没有满, 则将新提交的任务存储在这个工作队列中. 如果满了, 则进入下一个流程.
+           * 线程池判断**线程池的线程**是否都处于工作状态. 如果没有, 则创建一个新的工作线程来执行任务. 如果满了, 则交给饱和策略来处理这个任务.
 
-      * 线程池的创建:
+       * 线程池的创建:
 
-          - FixedThreadPool: 可重用固定线程数的线程池
+           - FixedThreadPool: 可重用固定线程数的线程池
 
-              ```java
-              public static ExecutorService newFixedThreadPool(int nThreads) {
-                  /*
-                   * corePoolSize 和 maximumPoolSize 都被设置为固定值
-                   * 当线程池的线程数大于 corePoolSize 时, keepAliveTime 为多于的空闲线程等待新任务
-                   * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 * 味着多于的空闲线程会被立即终止
-                   */
-                  return new ThreadPoolExecutor(nThreads, nThreads,
-                                                0L, TimeUnit.MILLISECONDS,
-                                                new LinkedBlockingQueue<Runnable>());
-              }
-              ```
-
-              `FixedThreadPool` 使用无界队列 `LinkedBlockingQueue` 作为线程池的工作队列(队列的容量为 Integer.MAX_VALUE). 使用无界队列的影响:
-
-              - 当线程池中的线程数量达到 `corePoolSize` 后, 新任务将在无界队列中等待, 因此线程池的线程数不会超过 `corePoolSize` .
-              - 由于上面原因, 使用无界队列时, `maximumPoolSize` 将是一个无效参数.
-              - 由于上面两个原因, 使用无界队列时, `keepAliveTime` 将是一个无效参数.
-              - 由于使用无界队列, 运行中的 `FixedThreadPool` 不会拒绝任务.
-
-          - SingleThreadExecutor: 单个线程数的线程池
-
-              ``` Java
-              public static ExecutorService newSingleThreadExecutor() {
-                  /*
-                   * corePoolSize 和 maximumPoolSize 都被设置为 1, 其余和 FixedThreadPool 相同
-                   */
-                  return new FinalizableDelegatedExecutorService
-                      (new ThreadPoolExecutor(1, 1,
-                                              0L, TimeUnit.MILLISECONDS,
-                                              new LinkedBlockingQueue<Runnable>()));
-              }
-              ```
-
-          - CachedThreadPool: 根据需要创建新线程的线程池    
-
-              ```java
-               public static ExecutorService newCachedThreadPool() {
+               ```java
+               public static ExecutorService newFixedThreadPool(int nThreads) {
                    /*
-                    * 这里的 corePoolSize 被设置为 0, maximumPoolSize 
-                    * 被设置为 Integer.MAX_VALUE, keepAliveTime 设置为
-                    * 60L
+                    * corePoolSize 和 maximumPoolSize 都被设置为固定值
+                    * 当线程池的线程数大于 corePoolSize 时, keepAliveTime 为多于的空闲线程等待新任务
+                    * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 * 味着多于的空闲线程会被立即终止
                     */
-                   return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                                                 60L, TimeUnit.SECONDS,
-                                                 new SynchronousQueue<Runnable>());
+                   return new ThreadPoolExecutor(nThreads, nThreads,
+                                                 0L, TimeUnit.MILLISECONDS,
+                                                 new LinkedBlockingQueue<Runnable>());
                }
-              ```
+               ```
 
-              `CachedThreadPool` 使用没有容量的 `SynchronousQueue` 作为线程池的工作队列. 由于 `CachedThreadPool` 的 `maximumPoolSize` 是无界的, 如果主线程提交任务的速度高于 `maximumPool` 中线程处理任务的速度, `CachedThreadPool` 会不断创建新的线程.
+               `FixedThreadPool` 使用无界队列 `LinkedBlockingQueue` 作为线程池的工作队列(队列的容量为 Integer.MAX_VALUE). 使用无界队列的影响:
 
-          - newSingleThreadScheduledPool(): 创建单个线程的可进行定时或周期性工作调度的线程池
+               - 当线程池中的线程数量达到 `corePoolSize` 后, 新任务将在无界队列中等待, 因此线程池的线程数不会超过 `corePoolSize` .
+               - 由于上面原因, 使用无界队列时, `maximumPoolSize` 将是一个无效参数.
+               - 由于上面两个原因, 使用无界队列时, `keepAliveTime` 将是一个无效参数.
+               - 由于使用无界队列, 运行中的 `FixedThreadPool` 不会拒绝任务.
 
-          - newThreadScheduledPool(): 创建多个线程的可进行定时或周期性工作调度的线程池
+           - SingleThreadExecutor: 单个线程数的线程池
 
-          - newWorkStealingPool(): 创建持有足够的线程的线程池来支持给定的并行级别. 默认会创建和处理器核心数量相同的线程.
+               ``` Java
+               public static ExecutorService newSingleThreadExecutor() {
+                   /*
+                    * corePoolSize 和 maximumPoolSize 都被设置为 1, 其余和 FixedThreadPool 相同
+                    */
+                   return new FinalizableDelegatedExecutorService
+                       (new ThreadPoolExecutor(1, 1,
+                                               0L, TimeUnit.MILLISECONDS,
+                                               new LinkedBlockingQueue<Runnable>()));
+               }
+               ```
 
-      * 线程池关闭:
+           - CachedThreadPool: 根据需要创建新线程的线程池    
 
-          关闭线程池可以调用线程池的 `shutdown()` 或 `shutdownNow()` 方法来关闭线程池. 它们的原理是遍历线程池中的工作线程, 然后逐个调用线程的 `interrupt()` 方法来中断线程, 所以无法响应中断的线程永远无法终止.
+               ```java
+                public static ExecutorService newCachedThreadPool() {
+                    /*
+                     * 这里的 corePoolSize 被设置为 0, maximumPoolSize 
+                     * 被设置为 Integer.MAX_VALUE, keepAliveTime 设置为
+                     * 60L
+                     */
+                    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                                  60L, TimeUnit.SECONDS,
+                                                  new SynchronousQueue<Runnable>());
+                }
+               ```
 
-          `shutdownNow()` 先将线程池的状态设置 `STOP`, 然后尝试**停止所有的正在执行或暂停任务**的线程, 并**返回等待执行任务的列表**;  `shutdown()` 只是将线程池的状态设置为 `SHUTDOWN` 状态, 然后**中断所有没有正在执行任务**(正在执行的线程不中断, 等待它们执行完毕)的线程.
+               `CachedThreadPool` 使用没有容量的 `SynchronousQueue` 作为线程池的工作队列. 由于 `CachedThreadPool` 的 `maximumPoolSize` 是无界的, 如果主线程提交任务的速度高于 `maximumPool` 中线程处理任务的速度, `CachedThreadPool` 会不断创建新的线程.
 
-          只要调用了上面两个方法中任意一个, `isShutdown()` 方法就会返回 true. 当所有的任务都已经关闭后, 才表示线程池关闭成功, 这时调用 `isTerminated()` 方法返回 true.
+           - newSingleThreadScheduledPool(): 创建单个线程的可进行定时或周期性工作调度的线程池
+
+           - newThreadScheduledPool(): 创建多个线程的可进行定时或周期性工作调度的线程池
+
+           - newWorkStealingPool(): 创建持有足够的线程的线程池来支持给定的并行级别. 默认会创建和处理器核心数量相同的线程.
+
+       * 线程池关闭:
+
+           关闭线程池可以调用线程池的 `shutdown()` 或 `shutdownNow()` 方法来关闭线程池. 它们的原理是遍历线程池中的工作线程, 然后逐个调用线程的 `interrupt()` 方法来中断线程, 所以无法响应中断的线程永远无法终止.
+
+           `shutdownNow()` 先将线程池的状态设置 `STOP`, 然后尝试**停止所有的正在执行或暂停任务**的线程, 并**返回等待执行任务的列表**;  `shutdown()` 只是将线程池的状态设置为 `SHUTDOWN` 状态, 然后**中断所有没有正在执行任务**(正在执行的线程不中断, 等待它们执行完毕)的线程.
+
+           只要调用了上面两个方法中任意一个, `isShutdown()` 方法就会返回 true. 当所有的任务都已经关闭后, 才表示线程池关闭成功, 这时调用 `isTerminated()` 方法返回 true.
 
 14. 线程池 submit() 和 execute() 方法区别:
 
-`execute()` 执行 `Runnable` 类型任务, 无返回值; `submit()` 执行 `Callable` 类型任务, 有返回值, 在内部是通过将 `Callable` 包装成 `FutureTask` 执行.
+     `execute()` 执行 `Runnable` 类型任务, 无返回值; `submit()` 执行 `Callable` 类型任务, 有返回值, 在内部是通过将 `Callable` 包装成 `FutureTask` 执行.
 
 15. 死锁:
 
-    - 死锁举例:
+     - 死锁举例:
 
-        当线程 A 持有独占锁 a, 并尝试去获取独占锁 b 的同时, 线程 B 持有独占锁 b, 并尝试去获取独占锁 a 的情况下, 就会发生 AB 两个线程由于互相持有对方需要的锁, 而发生的阻塞现象.
+         当线程 A 持有独占锁 a, 并尝试去获取独占锁 b 的同时, 线程 B 持有独占锁 b, 并尝试去获取独占锁 a 的情况下, 就会发生 AB 两个线程由于互相持有对方需要的锁, 而发生的阻塞现象.
 
-    - 产生死锁的条件:
-        - 互斥条件(mutual exclusion): 一个资源每次只能被一个线程使用, 此时如果有其它线程请求该资源, 则请求线程只能等待.
-        - 请求与保持条件(hold and wait or resource holding): 线程中已经保持了至少一个资源, 但是又提出了新的资源请求, 而该资源已经被其它线程占有, 此时请求线程被阻塞, 但是自己对已经获得资源保持不放.
-        - 不剥夺条件(no preemption): 线程未使用完的资源在未使用完毕之前, 不能被其它线程强行夺走, 即只能由获得该资源的线程自己来释放.
-        - 循环等待条件(circle wait): 线程间形成守卫相接循环等待资源的关系. 在发生死锁时必然存在一个线程等待队列 {P1, P2, P3, ..., Pn}, 其中 P1 等待 P2 占有的资源, P2 等待 P3 占有的资源, ..., Pn 等待 P1 占有的资源, 形成一个线程等待环路.
+     - 产生死锁的条件:
+         - 互斥条件(mutual exclusion): 一个资源每次只能被一个线程使用, 此时如果有其它线程请求该资源, 则请求线程只能等待.
+         - 请求与保持条件(hold and wait or resource holding): 线程中已经保持了至少一个资源, 但是又提出了新的资源请求, 而该资源已经被其它线程占有, 此时请求线程被阻塞, 但是自己对已经获得资源保持不放.
+         - 不剥夺条件(no preemption): 线程未使用完的资源在未使用完毕之前, 不能被其它线程强行夺走, 即只能由获得该资源的线程自己来释放.
+         - 循环等待条件(circle wait): 线程间形成守卫相接循环等待资源的关系. 在发生死锁时必然存在一个线程等待队列 {P1, P2, P3, ..., Pn}, 其中 P1 等待 P2 占有的资源, P2 等待 P3 占有的资源, ..., Pn 等待 P1 占有的资源, 形成一个线程等待环路.
 
-    - 死锁避免:
-        - 破环请求保持条件:
-            - 静态分配: 每个进程在开始执行时就申请它所需要的全部资源.
-            - 动态分配: 每个进程在申请所需要的资源时它本身不占用系统资源.
-        - 破环不可剥夺条件:
-            - 等待期间将占用的资源隐式的释放掉, 供其它线程使用, 等待的线程只有重新获取自己原有的资源以及新申请的资源才可以重新启动, 执行(例如调用 wait() 方法).
-        - 破环循环等待条件:
-            - 采用资源有序分配的基本思想. 将系统资源顺序进行编号, 将紧缺的, 稀少的资源采用较大的编号, 申请资源时必须按照编号的顺序执行, 有小编号资源的线程才能申请较大编号的资源.
-        - 常见方法:
-            - 避免一个线程同时获取多个锁
-            - 避免一个线程在锁内同时占用多个资源, 尽量保证每个锁只占用一个资源
-            - 尝试使用定时锁
-            - 对数据库加锁和解锁必须在一个数据库连接里, 否则会出现解锁失败
-        - 具体操作:
-            - 尽量使用 `tryLock(long timeout, TimeUnit unit)` 的方法 (ReentrantLock、ReentrantReadWriteLock)，设置超时时间，超时可以退出防止死锁.
-            - 尽量使用 Java. util. concurrent 并发类代替自己手写锁.
-            - 尽量降低锁的使用粒度，尽量不要几个功能用同一把锁.
-            - 尽量减少同步的代码块.
+     - 死锁避免:
+         - 破环请求保持条件:
+             - 静态分配: 每个进程在开始执行时就申请它所需要的全部资源.
+             - 动态分配: 每个进程在申请所需要的资源时它本身不占用系统资源.
+         - 破环不可剥夺条件:
+             - 等待期间将占用的资源隐式的释放掉, 供其它线程使用, 等待的线程只有重新获取自己原有的资源以及新申请的资源才可以重新启动, 执行(例如调用 wait() 方法).
+         - 破环循环等待条件:
+             - 采用资源有序分配的基本思想. 将系统资源顺序进行编号, 将紧缺的, 稀少的资源采用较大的编号, 申请资源时必须按照编号的顺序执行, 有小编号资源的线程才能申请较大编号的资源.
+         - 常见方法:
+             - 避免一个线程同时获取多个锁
+             - 避免一个线程在锁内同时占用多个资源, 尽量保证每个锁只占用一个资源
+             - 尝试使用定时锁
+             - 对数据库加锁和解锁必须在一个数据库连接里, 否则会出现解锁失败
+         - 具体操作:
+             - 尽量使用 `tryLock(long timeout, TimeUnit unit)` 的方法 (ReentrantLock、ReentrantReadWriteLock)，设置超时时间，超时可以退出防止死锁.
+             - 尽量使用 Java. util. concurrent 并发类代替自己手写锁.
+             - 尽量降低锁的使用粒度，尽量不要几个功能用同一把锁.
+             - 尽量减少同步的代码块.
 
-    - 死锁查看
+     - 死锁查看
 
-        - dump 线程查看: jps 获取进程号; jstack -F 进程号 dump 线程; 
+         - dump 线程查看: jps 获取进程号; jstack -F 进程号 dump 线程; 
 
 16. ThreadLocal 原理及使用场景:
 
-    ThreadLocal 为每个使用该变量的线程提供了独立的变量副本, 每一个线程都可以独立的改变自己的变量副本, 而不会影响其它线程所对应的副本. 使用场景有数据库连接和 Session 管理.
-
-    // TODO FutureTask 执行原理
+     ThreadLocal 为每个使用该变量的线程提供了独立的变量副本, 每一个线程都可以独立的改变自己的变量副本, 而不会影响其它线程所对应的副本. 使用场景有数据库连接和 Session 管理.
 
 17. 参考:
 
-    [1] : [浅谈Java Future](<https://zhuanlan.zhihu.com/p/42682411>)
+     [1] : [浅谈Java Future](<https://zhuanlan.zhihu.com/p/42682411>)
+
+     [2] : [深入理解Java虚拟机（第2版）](<https://book.douban.com/subject/24722612/>)
+
+     [3] : [Java并发编程的艺术](<https://book.douban.com/subject/26591326/>)
 
 ------
 
@@ -827,8 +829,9 @@
     大多数情况下, 对象在新生代 Eden 区分配. 当 Eden 区没有足够的空间进行分配时, 虚拟机将发起一次 Mino r GC. 大的对象可以直接在老年代进行分配, 避免在 Eden 区以及两个 Survivor 区之间发生大量的内存复制, 可以通过 `-XX:PretenureSizeThreshold` 设置大于这个值的对象直接在老年代分配. 虚拟机给每个对象定义一个对象年龄计数器, 对象在 Eden 出生并经过一个 Minor GC 后仍然存活, 并且能够被 Survivor 容纳的话, 将被移动到 Survivor 空间中, 并且对象年龄设为 1. 对象在 Survivor 区每熬过一次 Minor GC, 年龄就增加 1 岁. 当它的年龄增加到一定程度(默认 15 岁), 将会晋升到老年代中, 可以通过 `-XX:MaxTenuringThreshold=15` 来进行设置.  
 
 13. JVM 调优工具:
-    - jconsole: 用于对 JVM 中的内存, 线程和类进行监控
-    - jvisualvm: 可以分析内存快照, 线程快照, 程序死锁, 监控内存的变化, gc 变化.
+     - jconsole: 用于对 JVM 中的内存, 线程和类进行监控
+     - jvisualvm: 可以分析内存快照, 线程快照, 程序死锁, 监控内存的变化, gc 变化.
+
 14. 常用的 JVM 调优参数:
     - -Xms: 初始化堆大小(-Xms2g)
     - -Xmx: 堆最大内存(-Xmx2g)
@@ -840,11 +843,13 @@
     - -XX:NewRatio=4: 设置年轻的和老年代内存比例为 1:4
     - -XX:SurvivorRatio=8: 设置新生代 Eden 和 Survivor 比例为 8:2
 
-1. 参考:
+15. 参考:
 
-    [1] : [Java Virtual Machine (JVM) & its Architecture](https://www.guru99.com/java-virtual-machine-jvm.html)
+     [1] : [Java Virtual Machine (JVM) & its Architecture](https://www.guru99.com/java-virtual-machine-jvm.html)
 
-    [2] : [The JVM Architecture Explained](https://dzone.com/articles/jvm-architecture-explained)
+     [2] : [The JVM Architecture Explained](https://dzone.com/articles/jvm-architecture-explained)
+
+     [3] : [深入理解Java虚拟机（第2版）](<https://book.douban.com/subject/24722612/>)
 
 ------
 
@@ -1147,6 +1152,8 @@
 
    [2] : [揭晓Java异常体系中的秘密](<https://juejin.im/post/5aa64da06fb9a028d4443b61#heading-4>)
 
+   [3] : [深入理解Java虚拟机（第2版）](<https://book.douban.com/subject/24722612/>)
+
 #### Java Web:
 
 1. JSP 和 Servlet 区别:
@@ -1181,8 +1188,6 @@
     - page: 仅对当前页面有效. 一旦 JSP, Servlet 将数据放入 request 中, 该数据只可以被当前页面的 JSP 脚本, 声明部分访问.
 
 5. Session 和 Cookie 区别:
-
-    // TODO 登陆的实现, 忘记在哪里看的可以从 JSESSIONID 中解析出用户名和密码了
 
     Cookie 是服务器在本地机器上存储的小段文本并随每个请求发送至同一个服务器. Cookie 采用的是在客户端保持状态的方案, 它的使用需要用户打开客户端的 Cookie 支持. Cookie 主要包括: 名字, 值, 过期时间, 路径和域. 路径与域一起构成了 Cookie 的作用范围. 若不设置过期时间, 则表示这个 Cookie 的生命周期为浏览器会话期间, 关闭浏览器, Cookie 就消失了.
 
@@ -1461,299 +1466,296 @@
 
 11. AOP:
 
-     - 连接点(Joinpoint): 程序执行的某个特定位置.
-     - 切点(Pointcut): 符合切点定义表达式的连接点.  如果连接点相当于数据中的记录，那么切点相当于查询条件，一个切点可以匹配多个连接点.
-     - 增强(Advice): 织入到连接点的一段代码程序.
-     - 切面(Aspect):切面是由切点和增强（引介）组成
-     - 引入(Introduction):  可以向现有的类添加新方法或属性.
-     - 织入(Weaving): 把切面应用到目标对象并创建新的对象代理的过程.
-         - 编译时织入: 需要特殊的Java编译期(例如AspectJ的ajc)
-         - 类加载时织入: 要求使用特殊的类加载器，在装载类的时候对类进行增强
-         - 运行时织入: 在运行时为目标类生成代理实现增强。Spring采用了动态代理的方式实现了运行时织入.
+      - 连接点(Joinpoint): 程序执行的某个特定位置.
+      - 切点(Pointcut): 符合切点定义表达式的连接点.  如果连接点相当于数据中的记录，那么切点相当于查询条件，一个切点可以匹配多个连接点.
+      - 增强(Advice): 织入到连接点的一段代码程序.
+      - 切面(Aspect):切面是由切点和增强（引介）组成
+      - 引入(Introduction):  可以向现有的类添加新方法或属性.
+      - 织入(Weaving): 把切面应用到目标对象并创建新的对象代理的过程.
+          - 编译时织入: 需要特殊的Java编译期(例如AspectJ的ajc)
+          - 类加载时织入: 要求使用特殊的类加载器，在装载类的时候对类进行增强
+          - 运行时织入: 在运行时为目标类生成代理实现增强。Spring采用了动态代理的方式实现了运行时织入.
 
 12. Spring 自动装配:
 
-     - no: 没有自动装配, 通过手工设置ref 属性来进行装配bean.
-     - byName: 根据 bean 的名称注入对象依赖项.
-     - byType: 根据类型注入对象依赖项.
-     - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
-     - autodetect: 先通过 constructor 构造, 如果不行, 则使用 byType 构造.
+      - no: 没有自动装配, 通过手工设置ref 属性来进行装配bean.
+      - byName: 根据 bean 的名称注入对象依赖项.
+      - byType: 根据类型注入对象依赖项.
+      - constructor: 通过构造函数来注入依赖项目, 本质上还是通过类型进行查找.
+      - autodetect: 先通过 constructor 构造, 如果不行, 则使用 byType 构造.
 
 13. 常用注解:
 
-     - @Required 注解: 检查特定的属性是否设置，而不是特定类型的所有属性(就是在 XML 中设置或使用 @Value 注解赋值).
+      - @Required 注解: 检查特定的属性是否设置，而不是特定类型的所有属性(就是在 XML 中设置或使用 @Value 注解赋值).
 
-     - @Profile 注解: 某个环境激活才装配 Bean
+      - @Profile 注解: 某个环境激活才装配 Bean
+
+          ```java
+          @Profile("prod")
+          public class ProductionConfig {
+              
+          }
+          ```
+
+      - @Conditional 注解: 满足某个条件才装配 Bean
+
+          ```java
+          // Spring Boot 中大量使用该注解来实现自动化的配置
+          @Bean
+          @Conditional(MagixExistsCondition.class)
+          public MagicBean magicBean() {
+              return new MagicBean();
+          }
+          
+          public class MagicExistsCondition implements Conditon {
+              public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadat) {
+                  Environment env = context.getEnvironment();
+                  return env.containsProperty("magix");
+              }
+          }
+          ```
+
+          
+
+      - @Primary 注解: 接口有多个实现类时, 可以使用该注解表明优先选用哪一个 Bean
+
+          ```java
+          @Component
+          @Primary
+          Public class IceCream implements Dessert {
+              
+          }
+          ```
+
+      - @Qulifier 注解: 限定装配哪一个 Bean.
+
+          ```java
+          // 声明 Bean 指定限定符
+          @Component
+          @Qualifier("cold")
+          public class IceCream implements Dessert {
+              
+          }
+          // 注入, 这里也可以通过 @Qualifier("iceCream") 指定 Bean 的 ID 来限定, 但一般不这样做, 因为 IceCream 可能重构而改为其它的名称
+          @Autowired
+          @Qualifier("cold")
+          public void setDessert(Dessert dessert) {
+              this.dessert = dessert;
+          }
+          ```
+
+      - @Value 注解: 为字段赋值
+
+          ```java
+          // 还可以使用 Spring 表达式来获取值
+          public BlankDisc(@Value("${disc.title}") String title, @Value("${disc.artis}") String artist) {
+              this.title = title;
+              this.artis = artist;
+          }
+          ```
+
+          
+
+      - @Autowired 注解作用: 该注解可以对类成员变量, 方法以及构造函数进行标注, 完成自动装配的功能, 通过对该注解的使用来消除 `setter` 方法.
+
+14. Spring 事务实现方式:
+
+      - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
+      - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
+
+15. Spring 事务传播
+
+        Spring 允许通过声明方式, 在 IOC 配置中指定事务的边界和事务属性, Spring 自动在指定的事务边界上应用事务属性.
+
+        - TransactionDefinition: 描述事务的隔离级别, 超时时间, 是否为只读事务和事务传播规则等控制事务具体行为的事务属性.
+
+        - PlatformTransactionManager 根据 TransactionDefinition 提供的事务属性配置信息创建事务, 并用 TransactionStatus 描述激活事务的状态.
+
+        - Spring JDBC 和 MyBatis 事务管理器
+
+          DataSourceTransactionManager 内部使用 DataSource 的 `Connection#commit()`, `Connection#rollback()` 进行事务的管理
+
+        - DataSourceUtils#getConnection(DataSource dataSource) 方法可以从指定的数据源中获取与当前线程绑定的 Connection.
+
+        - Spring 事务传播行为
+
+          | 事务传播行为类型          | 说明                                                         |
+          | ------------------------- | ------------------------------------------------------------ |
+          | PROPAGATION_REQUIRED      | 如果当前没有事务, 则新建一个事务; 如果已经存在一个事务, 则加入到这个事务中 |
+          | PROPAGATION_SUPPORTS      | 支持当前事务, 如果当前没有事务, 则以非事务方式运行           |
+          | PROPAGATION_MANDATORY     | 使用当前的事务, 如果当前没有事务, 则抛出异常                 |
+          | PROPAGATION_REQUIRES_NEW  | 新建事务, 如果当前事务存在, 则把当前事务挂起                 |
+          | PROPAGATION_NOT_SUPPORTED | 以非事务的方式执行操作, 如果存在当前事务, 则把当前事务挂起   |
+          | PROPAGATION_NEVER         | 以非事务方式执行, 如果存在当前事务, 则抛出异常               |
+          | PROPAGATION_NESTED        | 如果存在当前事务, 则在嵌套事务内执行; 如果当前没有事务, 则新建一个事务 |
+
+       - 编程式事务
 
          ```java
-         @Profile("prod")
-         public class ProductionConfig {
+         public class ForumService {
+             private ForumDao forumDao;
+             private TransactionTemplate template;
              
+             @Autowired
+             public void setTemplate(TransanctionTemplate template) {
+                 this.template = template;
+             }
+             
+             public void addForum(final Forum forum) {
+                 template.execute(new TransanctionCallbackWithoutResult() {
+                     protected void doInTransactionWithoutResult(TransactionStatus status) {
+                         forumDao.addForum(forum);
+                     } 
+                 });
+             }
          }
          ```
 
-     - @Conditional 注解: 满足某个条件才装配 Bean
+       - 声明式事务
+
+         ```xml
+         <!--声明事务管理器-->
+         <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+             <property name="dataSource" ref="dataSource"/>
+         </bean>
+         
+         <!--需要实施事务增强的目标业务 Bean-->
+         <bean id="forumTarget" class="com.smart.service.forum"
+               p:forumDao-ref="forumDao"
+               p:topicDao-ref="topicDao"
+               p:postDao-ref="postDao"/>
+         
+         <!--使用代理工厂类为目标业务 Bean 提供事务增强-->
+         <bean id="forum" class="org.springframework.transaction.intercepter.TransactionProxyFactoryBean"
+               p:transactionManager-ref="txManager"
+               p:target-ref="forumTarget">
+         	<property name="transactionAttributes">
+             	<props>
+                 	<prop key="get*">PROPAGATION_REQUIRED, readOnly</prop>
+                     <prop key="*">PROPAGATION_REQUIRED</prop>
+                 </props>
+             </property>
+         </bean>
+         
+         <!-------------------------使用切面定义语言--------------->
+         <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+         p:dataSource-ref="dataSource"/>
+         
+         <aop:config>
+         	<aop:pointcut id="serviceMethod" expression="execution(* com.smart.service.*Forum.*(..))"/>
+             <aop:advisor pointcut-ref="serviceMethod" advice-ref="txAdvice"/>
+         </aop:config>
+         
+         <tx:advice id="txAdvice" transaction-manager="txManager">
+         	<tx:attributes>
+             	<tx:method name="get*" read-only="false"/>
+                 <tx:method name="add" rollback-for="Exception"/>
+                 <tx:method name="update"/>
+             </tx:attributes>
+         </tx:advice>
+         
+         <!----------------------------开启注解---------------->
+         <tx:annotation-driver transaction-manager="txManager"/>
+         ```
 
          ```java
-         // Spring Boot 中大量使用该注解来实现自动化的配置
-         @Bean
-         @Conditional(MagixExistsCondition.class)
-         public MagicBean magicBean() {
-             return new MagicBean();
-         }
-         
-         public class MagicExistsCondition implements Conditon {
-             public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadat) {
-                 Environment env = context.getEnvironment();
-                 return env.containsProperty("magix");
+         // 在业务类上使用 @Transactional 注解
+         @Transcational
+         public class Forum {
+             // 这里注解会覆盖上面的注解
+             @Transactional(readOnly = true)
+             public Forum getForm(int forumId) {
+                 return foruDao.getForum(forumId);
              }
          }
          ```
 
          
-
-     - @Primary 注解: 接口有多个实现类时, 可以使用该注解表明优先选用哪一个 Bean
-
-         ```java
-         @Component
-         @Primary
-         Public class IceCream implements Dessert {
-             
-         }
-         ```
-
-     - @Qulifier 注解: 限定装配哪一个 Bean.
-
-         ```java
-         // 声明 Bean 指定限定符
-         @Component
-         @Qualifier("cold")
-         public class IceCream implements Dessert {
-             
-         }
-         // 注入, 这里也可以通过 @Qualifier("iceCream") 指定 Bean 的 ID 来限定, 但一般不这样做, 因为 IceCream 可能重构而改为其它的名称
-         @Autowired
-         @Qualifier("cold")
-         public void setDessert(Dessert dessert) {
-             this.dessert = dessert;
-         }
-         ```
-
-     - @Value 注解: 为字段赋值
-
-         ```java
-         // 还可以使用 Spring 表达式来获取值
-         public BlankDisc(@Value("${disc.title}") String title, @Value("${disc.artis}") String artist) {
-             this.title = title;
-             this.artis = artist;
-         }
-         ```
-
-         
-
-     - @Autowired 注解作用: 该注解可以对类成员变量, 方法以及构造函数进行标注, 完成自动装配的功能, 通过对该注解的使用来消除 `setter` 方法.
-
-14. Spring 事务实现方式:
-
-     - 声明式事务: 基于 XML 配置文件的方式和注解方式 (@Transactional)
-     - 编码方式: 提供变得形式管理和维护事务 (TransactionTemplate)
-
-15. Spring 事务传播
-
-       Spring 允许通过声明方式, 在 IOC 配置中指定事务的边界和事务属性, Spring 自动在指定的事务边界上应用事务属性.
-
-       - TransactionDefinition: 描述事务的隔离级别, 超时时间, 是否为只读事务和事务传播规则等控制事务具体行为的事务属性.
-
-       - PlatformTransactionManager 根据 TransactionDefinition 提供的事务属性配置信息创建事务, 并用 TransactionStatus 描述激活事务的状态.
-
-       - Spring JDBC 和 MyBatis 事务管理器
-
-         DataSourceTransactionManager 内部使用 DataSource 的 `Connection#commit()`, `Connection#rollback()` 进行事务的管理
-
-       - DataSourceUtils#getConnection(DataSource dataSource) 方法可以从指定的数据源中获取与当前线程绑定的 Connection.
-
-       - Spring 事务传播行为
-
-         | 事务传播行为类型          | 说明                                                         |
-         | ------------------------- | ------------------------------------------------------------ |
-         | PROPAGATION_REQUIRED      | 如果当前没有事务, 则新建一个事务; 如果已经存在一个事务, 则加入到这个事务中 |
-         | PROPAGATION_SUPPORTS      | 支持当前事务, 如果当前没有事务, 则以非事务方式运行           |
-         | PROPAGATION_MANDATORY     | 使用当前的事务, 如果当前没有事务, 则抛出异常                 |
-         | PROPAGATION_REQUIRES_NEW  | 新建事务, 如果当前事务存在, 则把当前事务挂起                 |
-         | PROPAGATION_NOT_SUPPORTED | 以非事务的方式执行操作, 如果存在当前事务, 则把当前事务挂起   |
-         | PROPAGATION_NEVER         | 以非事务方式执行, 如果存在当前事务, 则抛出异常               |
-         | PROPAGATION_NESTED        | 如果存在当前事务, 则在嵌套事务内执行; 如果当前没有事务, 则新建一个事务 |
-
-      - 编程式事务
-
-        ```java
-        public class ForumService {
-            private ForumDao forumDao;
-            private TransactionTemplate template;
-            
-            @Autowired
-            public void setTemplate(TransanctionTemplate template) {
-                this.template = template;
-            }
-            
-            public void addForum(final Forum forum) {
-                template.execute(new TransanctionCallbackWithoutResult() {
-                    protected void doInTransactionWithoutResult(TransactionStatus status) {
-                        forumDao.addForum(forum);
-                    } 
-                });
-            }
-        }
-        ```
-
-      - 声明式事务
-
-        ```xml
-        <!--声明事务管理器-->
-        <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-            <property name="dataSource" ref="dataSource"/>
-        </bean>
-        
-        <!--需要实施事务增强的目标业务 Bean-->
-        <bean id="forumTarget" class="com.smart.service.forum"
-              p:forumDao-ref="forumDao"
-              p:topicDao-ref="topicDao"
-              p:postDao-ref="postDao"/>
-        
-        <!--使用代理工厂类为目标业务 Bean 提供事务增强-->
-        <bean id="forum" class="org.springframework.transaction.intercepter.TransactionProxyFactoryBean"
-              p:transactionManager-ref="txManager"
-              p:target-ref="forumTarget">
-        	<property name="transactionAttributes">
-            	<props>
-                	<prop key="get*">PROPAGATION_REQUIRED, readOnly</prop>
-                    <prop key="*">PROPAGATION_REQUIRED</prop>
-                </props>
-            </property>
-        </bean>
-        
-        <!-------------------------使用切面定义语言--------------->
-        <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
-        p:dataSource-ref="dataSource"/>
-        
-        <aop:config>
-        	<aop:pointcut id="serviceMethod" expression="execution(* com.smart.service.*Forum.*(..))"/>
-            <aop:advisor pointcut-ref="serviceMethod" advice-ref="txAdvice"/>
-        </aop:config>
-        
-        <tx:advice id="txAdvice" transaction-manager="txManager">
-        	<tx:attributes>
-            	<tx:method name="get*" read-only="false"/>
-                <tx:method name="add" rollback-for="Exception"/>
-                <tx:method name="update"/>
-            </tx:attributes>
-        </tx:advice>
-        
-        <!----------------------------开启注解---------------->
-        <tx:annotation-driver transaction-manager="txManager"/>
-        ```
-
-        ```java
-        // 在业务类上使用 @Transactional 注解
-        @Transcational
-        public class Forum {
-            // 这里注解会覆盖上面的注解
-            @Transactional(readOnly = true)
-            public Forum getForm(int forumId) {
-                return foruDao.getForum(forumId);
-            }
-        }
-        ```
-
-        
 
 16. 单点登录:
 
 17. SpringMVC 工作过程:
 
-     ![](./asserts/SpringMVC.PNG)
+      ![](./asserts/SpringMVC.PNG)
 
 18. SpringMVC  上下文
 
-     Spring IOC 是一个独立的模块, 它并不是直接在 Web 容器中发挥作用的, 如果要在 Web 环境中使用 IOC 容器, 需要 Spring 为 IOC 设计一个启动过程, 把 IOC 容器导入, 并在 Web 容器中建立起来. 在这个过程中, 一方面处理 Web 容器的启动, 另一方面通过设计特定 Web 容器拦截器, 将 IOC 容器载入到 Web 环境中, 并将其初始化. 在这个过程建立完成以后, IOC 容器才能正常工作, 而 SpringMVC 是建立在 IOC 容器基础上的.
+      Spring IOC 是一个独立的模块, 它并不是直接在 Web 容器中发挥作用的, 如果要在 Web 环境中使用 IOC 容器, 需要 Spring 为 IOC 设计一个启动过程, 把 IOC 容器导入, 并在 Web 容器中建立起来. 在这个过程中, 一方面处理 Web 容器的启动, 另一方面通过设计特定 Web 容器拦截器, 将 IOC 容器载入到 Web 环境中, 并将其初始化. 在这个过程建立完成以后, IOC 容器才能正常工作, 而 SpringMVC 是建立在 IOC 容器基础上的.
 
-     
+      
 
-     - Spring IOC 上下文: 加载应用中的其它 Bean
+      - Spring IOC 上下文: 加载应用中的其它 Bean
 
-         在 ContextListener(实现 ServletContextListener) 中初始化. ContextListener 通过监听 Web 容器的生命周期变化去初始化 Spring IOC 上下文. 这个上下文存放在 ServletContext 这个上下文中.
+          在 ContextListener(实现 ServletContextListener) 中初始化. ContextListener 通过监听 Web 容器的生命周期变化去初始化 Spring IOC 上下文. 这个上下文存放在 ServletContext 这个上下文中.
 
-     - 映射请求上下文: 加载包含 Web 组件的 Bean, 例如控制器, 视图解析器以及处理器映射
+      - 映射请求上下文: 加载包含 Web 组件的 Bean, 例如控制器, 视图解析器以及处理器映射
 
 19. SpringMVC 配置:
 
-     - 配置 DispatcherServlet(SpringMVC 的前端控制器), 容器会在类路径查找 ServletContainerInitializer 接口的实现类来配置 DispatcherServlet, Spring 提供了 SpringServletContainerInitializer 作为实现类, 该类又会去查找实现 WebApplicationInitializer 的实现类, Spring 提供了AbstractAnnotationConfigDispatcherServletInitilizer 实现(可以通过实现该类来配置 Servlet).
+      - 配置 DispatcherServlet(SpringMVC 的前端控制器), 容器会在类路径查找 ServletContainerInitializer 接口的实现类来配置 DispatcherServlet, Spring 提供了 SpringServletContainerInitializer 作为实现类, 该类又会去查找实现 WebApplicationInitializer 的实现类, Spring 提供了AbstractAnnotationConfigDispatcherServletInitilizer 实现(可以通过实现该类来配置 Servlet).
 
-         DispatcherServlet 的配置声明在 WebConfig 中, 而根配置定义在 RootConfig 中.
+          DispatcherServlet 的配置声明在 WebConfig 中, 而根配置定义在 RootConfig 中.
 
-         ```java
-         // DispatcherServlet 上下文配置
-         @Configuration
-         @EnableWebMvc
-         @ComponentScan("spitter.web") // 这个配置的是 @Controller 注解修饰的控制器的位置
-         public class WebConfig extends WebMvcConfigurerAdapter {
-             @Bean
-             public ViewResolver viewResolver() {
-                 InternalViewResolver resolver = new InternalViewResolver();
-                 resolver.setPrefix("/WEB-INF/views");
-                 resolver.setSuffix(".jsp");
-                 return resolver;
-             }
-             
-             @Override
-             public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configure) {
-                 configurer.enable();
-             }
-         }
-         // Spring 应用上下文配置
-         @Configuration
-         @ComponentScan(basePackages={"spitter"}, excludeFilters={@Filter(type=FilterType.ANNOTATION, value=EnableWebMvc.class)}) 
-         public class RootConfig {
-             
-         }
-         ```
+          ```java
+          // DispatcherServlet 上下文配置
+          @Configuration
+          @EnableWebMvc
+          @ComponentScan("spitter.web") // 这个配置的是 @Controller 注解修饰的控制器的位置
+          public class WebConfig extends WebMvcConfigurerAdapter {
+              @Bean
+              public ViewResolver viewResolver() {
+                  InternalViewResolver resolver = new InternalViewResolver();
+                  resolver.setPrefix("/WEB-INF/views");
+                  resolver.setSuffix(".jsp");
+                  return resolver;
+              }
+              
+              @Override
+              public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configure) {
+                  configurer.enable();
+              }
+          }
+          // Spring 应用上下文配置
+          @Configuration
+          @ComponentScan(basePackages={"spitter"}, excludeFilters={@Filter(type=FilterType.ANNOTATION, value=EnableWebMvc.class)}) 
+          public class RootConfig {
+              
+          }
+          ```
 
 20. Spring JSP 视图渲染过程:
 
-        * `InternalResourceView#render()`方法
-        
-        * `Application#forward()`方法
-        
-        * `ApplicationFilterChain#doFilter()`方法
-        
-        * `JspServlet.service()`方法
-        
-        * `JspCompilationContext.compile()`方法
-        
-        * `eclipse.Compiler.compile()`方法
-        
-        然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
+     * `InternalResourceView#render()`方法
+
+     * `Application#forward()`方法
+
+     * `ApplicationFilterChain#doFilter()`方法
+
+     * `JspServlet.service()`方法
+
+     * `JspCompilationContext.compile()`方法
+
+     * `eclipse.Compiler.compile()`方法
+
+     然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
 
 21. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
 
-         - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
-         - ModelMethodProcessor: 处理返回值为 Model
-         - ViewMethodReturnValueHandler: 处理返回值为 View
-         - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
-         - StreamingResponseBodyReturnValueHandler: 
-         - HttpEntityMethodProcessor
-         - HttpHeadersReturnValueHandler
-         - CallableMethodReturnValueHandler
-         - DeferredResultMethodReturnValueHandler
-         - AsyncTaskMethodReturnValueHandler
-         - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
-         - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
-         - ViewNameMethodReturnValueHandler: 处理直接返回String类型
-         - MapMethodProcessor: 处理返回Map类型
-         - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
-
-
-     ​    
+      - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
+      - ModelMethodProcessor: 处理返回值为 Model
+      - ViewMethodReturnValueHandler: 处理返回值为 View
+      - ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
+      - StreamingResponseBodyReturnValueHandler: 
+      - HttpEntityMethodProcessor
+      - HttpHeadersReturnValueHandler
+      - CallableMethodReturnValueHandler
+      - DeferredResultMethodReturnValueHandler
+      - AsyncTaskMethodReturnValueHandler
+      - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+      - RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
+      - ViewNameMethodReturnValueHandler: 处理直接返回String类型
+      - MapMethodProcessor: 处理返回Map类型
+      - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
 
 22. 参考
 
@@ -1776,6 +1778,12 @@
      [6] : [Spring AOP,AspectJ, CGLIB 有点晕](<https://www.jianshu.com/p/fe8d1e8bd63e>)
 
      [7] : [Spring auto wire（自动装配） 的 五种方式](<https://blog.csdn.net/topwqp/article/details/8686025>)
+
+    [8] : [Spring实战（第4版）](<https://book.douban.com/subject/26767354/>)
+
+    [9] : [精通Spring+4.x++企业应用开发实战.pdf](<https://book.douban.com/subject/26952826/>)
+
+    [10] : [SPRING技术内幕：深入解析SPRING架构与设计原理](<https://book.douban.com/subject/10470970/>)
 
 ------
 
@@ -2471,6 +2479,8 @@
 
    [22] : [Centos7下yum安装和使用Percona-toolkit工具](<https://aqzt.com/5366.html>)
 
+   [23] : [高性能MySQL](<https://book.douban.com/subject/23008813/>)
+
 ------
 
 #### Redis 
@@ -2637,6 +2647,8 @@
 11. 参考:
 
    [1] : [Redis分布式锁的正确实现方式（Java版）](<https://wudashan.cn/2017/10/23/Redis-Distributed-Lock-Implement/>)
+
+   [2] : [Redis开发与运维](<https://book.douban.com/subject/26971561/>)
 
 ------
 
@@ -2959,3 +2971,6 @@
     [1] : [Mybatis常见面试题](https://segmentfault.com/a/1190000013678579)
 
     [2] : [复习Mybatis框架，面试题](<https://zhuanlan.zhihu.com/p/60257737>)
+
+    [3] : [MyBatis从入门到精通](<https://book.douban.com/subject/27074809/>)
+
