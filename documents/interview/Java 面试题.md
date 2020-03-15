@@ -128,10 +128,22 @@
               }.method();
           }
       }
-      //匿名内部类必须继承或实现一个已有的接口 
+      // 匿名内部类必须继承或实现一个已有的接口 
       interface Service{
           void method();
       }
+      /**
+       * 使用匿名内部类初始化数据
+       * 第一层括号的含义是创建实现 HashMap 的匿名子类
+       * 第二层括号的含义是该子类的初始化块
+       */
+      Map<String, String> user = new HashMap<String, String> {
+          {
+              put("id", "123456");
+              put("name", "xiaoli");
+              put("age", "12");
+          }
+      };
       ```
 
     - 匿名内部类的 Class 名称为 外部类+$+数字 
@@ -260,13 +272,51 @@
 
       StringBuilder 继承 AbstractStringBuilder, 它的每个方法都是采用 `synchronized` 修饰的.
 
-13. 参考:
+13. finalize() 方法
+
+    - 在对象初始化过程中会判断是否重写 `finalize()` 方法，如果重写就将当前对象注册到 `FinalizerThread` 的 `ReferenceQueue` 队列中。注册后的对象叫 `Finalizer`。
+    - 当对象引用不在时，`FinalizerThread` 线程负责从 `ReferenceQueue` 队列中获取 `Finalizer` 对象开始执行 `finalize()` 方法，在执行之前，对象一直在堆中。
+    - 当 `finalize()` 方法执行完毕后，对象才算真正没有引用了，才能进行垃圾回收。
+
+    `finalize()` 主要的影响在于在队列中等待被执行时一直占用着堆内存，这样可能导致堆内存溢出。
+
+    ```java
+    /**
+     * -Xms10m -Xmx10m
+     */
+    public class FinalizeStudy {
+        private static class BigObject {
+            // 大对象占用 1M 内存
+            private byte[] content = new byte[1024 * 1024];
+    		/**
+    		 * 若重写了 finalize() 方法，则会产生堆内存溢出异常
+             * 若没有重写，则不会产生异常，程序正常运行
+    		 */
+            @Override
+            protected void finalize() {
+                System.out.println("execute finalize");
+            }
+        }
+    
+        public static void main(String[] args) {
+            for (int i = 0; i < 1000; i++) {
+                BigObject bigObject = new BigObject();
+            }
+        }
+    }
+    ```
+
+14. 参考:
 
     [1] : [Java内部类解析你知道多少？](<https://zhuanlan.zhihu.com/p/103258844>)
 
     [2] : [How do hashCode() and identityHashCode() work at the back end?](https://stackoverflow.com/questions/4930781/how-do-hashcode-and-identityhashcode-work-at-the-back-end)
 
     [3] : [正则表达式30分钟入门教程](<https://www.jb51.net/tools/zhengze.html>)
+
+    [4] : [java中为什么不推荐使用finalize，知道原因后相信你也不会用了](https://zhuanlan.zhihu.com/p/101959252)
+    
+    [5] : [关于java匿名内部类初始化法](https://www.jianshu.com/p/aebacb57dd74)
 
 ------
 
@@ -593,7 +643,12 @@
                    /*
                     * corePoolSize 和 maximumPoolSize 都被设置为固定值
                     * 当线程池的线程数大于 corePoolSize 时, keepAliveTime 为多于的空闲线程等待新任务
+<<<<<<< HEAD
                     * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 * 味着多于的空闲线程会被立即终止
+=======
+                    * 的最长时间, 超过这个时间后多余的线程将被终止. 这里把 keepAliveTime 设置为 0L, 意		 
+                    * 味着多于的空闲线程会被立即终止
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
                     */
                    return new ThreadPoolExecutor(nThreads, nThreads,
                                                  0L, TimeUnit.MILLISECONDS,
@@ -659,6 +714,7 @@
 
 15. 死锁:
 
+<<<<<<< HEAD
      - 死锁举例:
 
          当线程 A 持有独占锁 a, 并尝试去获取独占锁 b 的同时, 线程 B 持有独占锁 b, 并尝试去获取独占锁 a 的情况下, 就会发生 AB 两个线程由于互相持有对方需要的锁, 而发生的阻塞现象.
@@ -691,6 +747,40 @@
      - 死锁查看
 
          - dump 线程查看: jps 获取进程号; jstack -F 进程号 dump 线程; 
+=======
+    - 死锁举例:
+
+        当线程 A 持有独占锁 a, 并尝试去获取独占锁 b 的同时, 线程 B 持有独占锁 b, 并尝试去获取独占锁 a 的情况下, 就会发生 AB 两个线程由于互相持有对方需要的锁, 而发生的阻塞现象.
+
+    - 产生死锁的条件:
+        - 互斥条件(mutual exclusion): 一个资源每次只能被一个线程使用, 此时如果有其它线程请求该资源, 则请求线程只能等待.
+        - 请求与保持条件(hold and wait or resource holding): 线程中已经保持了至少一个资源, 但是又提出了新的资源请求, 而该资源已经被其它线程占有, 此时请求线程被阻塞, 但是自己对已经获得资源保持不放.
+        - 不剥夺条件(no preemption): 线程未使用完的资源在未使用完毕之前, 不能被其它线程强行夺走, 即只能由获得该资源的线程自己来释放.
+        - 循环等待条件(circle wait): 线程间形成首尾相接循环等待资源的关系. 在发生死锁时必然存在一个线程等待队列 {P1, P2, P3, ..., Pn}, 其中 P1 等待 P2 占有的资源, P2 等待 P3 占有的资源, ..., Pn 等待 P1 占有的资源, 形成一个线程等待环路.
+
+    - 死锁避免:
+        - 破环请求保持条件:
+            - 静态分配: 每个进程在开始执行时就申请它所需要的全部资源.
+            - 动态分配: 每个进程在申请所需要的资源时它本身不占用系统资源.
+        - 破环不可剥夺条件:
+            - 等待期间将占用的资源隐式的释放掉, 供其它线程使用, 等待的线程只有重新获取自己原有的资源以及新申请的资源才可以重新启动, 执行(例如调用 wait() 方法).
+        - 破环循环等待条件:
+            - 采用资源有序分配的基本思想. 将系统资源顺序进行编号, 将紧缺的, 稀少的资源采用较大的编号, 申请资源时必须按照编号的顺序执行, 有小编号资源的线程才能申请较大编号的资源.
+        - 常见方法:
+            - 避免一个线程同时获取多个锁
+            - 避免一个线程在锁内同时占用多个资源, 尽量保证每个锁只占用一个资源
+            - 尝试使用定时锁
+            - 对数据库加锁和解锁必须在一个数据库连接里, 否则会出现解锁失败
+        - 具体操作:
+            - 尽量使用 `tryLock(long timeout, TimeUnit unit)` 的方法 (ReentrantLock、ReentrantReadWriteLock)，设置超时时间，超时可以退出防止死锁.
+            - 尽量使用 Java. util. concurrent 并发类代替自己手写锁.
+            - 尽量降低锁的使用粒度，尽量不要几个功能用同一把锁.
+            - 尽量减少同步的代码块.
+
+    - 死锁查看
+
+        - dump 线程查看: jps 获取进程号; jstack -F 进程号 dump 线程; 
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
 16. ThreadLocal 原理及使用场景:
 
@@ -767,7 +857,7 @@
     - 加载:  根据类的全限定名获取类的二进制流, 将这个二进制流代表的静态存储结构转化为方法区的运行时数据结构, 然后生成一个 `Class` 类的对象 (对于 HotSpot 虚拟机而言, 该对象存在于方法区).
     - 验证：检查加载的 Class 文件的正确性.
     - 准备:  为类变量的分配内存并设置类变量最初始值(在方法区分配变量).
-    - 解析: 将常量池重的符号引用替换为直接引用的过程. 符号引用就是一个标识字符串, 直接引用相当于内存的地址.
+    - 解析: 将常量池中的符号引用替换为直接引用的过程. 符号引用就是一个标识字符串, 直接引用相当于内存的地址.
     - 初始化: 对静态变量和静态代码初始块执行初始化工作.
 
 6. 如何判断对象是否可以被回收:
@@ -785,7 +875,7 @@
 8. JVM 垃圾回收算法:
 
     - 标记-清除算法(Mark-Sweep): 标记无用对象, 然后进行清除回收. 缺点: 效率不高, 无法清除垃圾碎片.
-    - 复制算法: 将容量划分为两个大小相等的内存区域. 每次只使用其中的一块. 当一块用完的时候将或者的对象复制到另一块上, 然后把已使用的内存空间一次清理掉. 缺点: 内存使用率不高, 只有原来的一半.
+    - 复制算法: 将容量划分为两个大小相等的内存区域. 每次只使用其中的一块. 当一块用完的时候将活着的对象复制到另一块上, 然后把已使用的内存空间一次清理掉. 缺点: 内存使用率不高, 只有原来的一半.
     - 标记-整理算法(Mark-Compact): 标记无用对象, 让所有存活的对象都向一端移动, 然后直接清除掉端边界以外的内存.
     - 分代算法: 根据对象存活周期的不同将内存划分为几块, 一般是新生代和老年代, 新生代采用复制算法, 老年代采用标记清理算法.
 
@@ -822,16 +912,20 @@
 
 12. 分代垃圾回收器工作原理:
 
-    分代回收器有两个分区: 老生代和新生代. 新生代默认的空间占总空间的 1/3, 老生代默认的空间占总空间的 2/3. 新生代使用的是复制算法, 新生代里有 3 个分区: Eden, To Survivor, From Survivor, 它们默认的占比是 
-
-    8:1:1.
+    分代回收器有两个分区: 老生代和新生代. 新生代默认的空间占总空间的 1/3, 老生代默认的空间占总空间的 2/3. 新生代使用的是复制算法, 新生代里有 3 个分区: Eden, To Survivor, From Survivor, 它们默认的占比是 8:1:1.
 
     大多数情况下, 对象在新生代 Eden 区分配. 当 Eden 区没有足够的空间进行分配时, 虚拟机将发起一次 Mino r GC. 大的对象可以直接在老年代进行分配, 避免在 Eden 区以及两个 Survivor 区之间发生大量的内存复制, 可以通过 `-XX:PretenureSizeThreshold` 设置大于这个值的对象直接在老年代分配. 虚拟机给每个对象定义一个对象年龄计数器, 对象在 Eden 出生并经过一个 Minor GC 后仍然存活, 并且能够被 Survivor 容纳的话, 将被移动到 Survivor 空间中, 并且对象年龄设为 1. 对象在 Survivor 区每熬过一次 Minor GC, 年龄就增加 1 岁. 当它的年龄增加到一定程度(默认 15 岁), 将会晋升到老年代中, 可以通过 `-XX:MaxTenuringThreshold=15` 来进行设置.  
 
 13. JVM 调优工具:
+<<<<<<< HEAD
      - jconsole: 用于对 JVM 中的内存, 线程和类进行监控
      - jvisualvm: 可以分析内存快照, 线程快照, 程序死锁, 监控内存的变化, gc 变化.
 
+=======
+    - jconsole: 用于对 JVM 中的内存, 线程和类进行监控
+    - jvisualvm: 可以分析内存快照, 线程快照, 程序死锁, 监控内存的变化, gc 变化.
+    
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 14. 常用的 JVM 调优参数:
     - -Xms: 初始化堆大小(-Xms2g)
     - -Xmx: 堆最大内存(-Xmx2g)
@@ -840,7 +934,7 @@
     - -XX:+PrintGCDetail: 打印 gc 详细信息
     - -XX:+HeapDumpOnOutOfMemoryError: 出现内存溢出异常时 Dump 出当前的内存堆转储快照
     - -Xss128k: 设置栈内存容量
-    - -XX:NewRatio=4: 设置年轻的和老年代内存比例为 1:4
+    - -XX:NewRatio=4: 设置年轻的和老年代内存比例为 1:4（老年代对新生代的倍数）
     - -XX:SurvivorRatio=8: 设置新生代 Eden 和 Survivor 比例为 8:2
 
 15. 参考:
@@ -849,7 +943,15 @@
 
      [2] : [The JVM Architecture Explained](https://dzone.com/articles/jvm-architecture-explained)
 
+<<<<<<< HEAD
      [3] : [深入理解Java虚拟机（第2版）](<https://book.douban.com/subject/24722612/>)
+=======
+    [2] : [The JVM Architecture Explained](https://dzone.com/articles/jvm-architecture-explained)
+    
+    [3] : [咱们从头到尾说一次 Java 垃圾回收](https://zhuanlan.zhihu.com/p/73628158)
+    
+    [4] : [JVM 内存区域大小参数设置](https://www.cnblogs.com/Zfc-Cjk/p/11587827.html)
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
 ------
 
@@ -973,8 +1075,7 @@
               }
           }
           private static void test() throws Exception {
-              Connection conn = null;
-              try (conn = new Connection();) {
+              try (Connection conn = new Connection();) {
                   conn.sendData();
               }
           }
@@ -1078,23 +1179,21 @@
                     System.out.println("Caught A");
                     throw a;
                 }
-            } 
-            catch (B b) {
+            } catch (B b) {
                 // 这里可以捕获到异常
                 System.out.println("Caught B");
                 return ;
-            }
-            finally {
+            } finally {
                 System.out.println("Hello World!");
             }
         }
     }
     ```
-
+    
     下面代码没有出现异常返回值为 1; 出现 Exception 异常返回 2; 出现 Exception 以外的异常, 方法非正常退出, 没有返回值.
 
     ```java
-    public int inc() {
+public int inc() {
         int x;
         try {
             x = 1;
@@ -1107,9 +1206,9 @@
         }
     }
     ```
-
+    
     ```java
-    public int inc();
+public int inc();
     	Code:
     		Stack = 1, Locals = 5, Args_size = 1
             // try 块中的代码对应字节码    
@@ -1145,7 +1244,7 @@
             
                 
     ```
-
+    
 8. 参考
 
    [1] : [Java栈溢出--StackOverflowError](<https://www.jianshu.com/p/faad22e1faf0>)
@@ -1284,7 +1383,7 @@
 
     - 第二次挥手(ACK=1, ackNum=u+1)
 
-        服务端收到连接释放报文段后发出确认报文, 此时 ACK=1, seq=v, ackNum=u+1, 服务端进入 `CLOSE-WAIT` z状态. 此时客户端没有数据向服务端发送了, 但是服务端向客户端发送数据, 客户端仍然要接收(也就是客户端到服务端已经关闭, 服务端到客户端还未关闭). 客户端受到服务端的确认后, 进入 `FIN-WAIT-2` 状态.
+        服务端收到连接释放报文段后发出确认报文, 此时 ACK=1, seq=v, ackNum=u+1, 服务端进入 `CLOSE-WAIT` 状态. 此时客户端没有数据向服务端发送了, 但是服务端向客户端发送数据, 客户端仍然要接收(也就是客户端到服务端已经关闭, 服务端到客户端还未关闭). 客户端受到服务端的确认后, 进入 `FIN-WAIT-2` 状态.
 
     - 第三次挥手(FIN=1, seq=w, ackNum=u+1)
 
@@ -1420,9 +1519,9 @@
 
       ```java
       // 可以使用 classpath: 前缀
-      ApplicationContext ctx = new FileSystemXmlApplicationContext( "G:/Test/applicationcontext.xml");
+      ApplicationContext ctx = new FileSystemXmlApplicationContext("G:/Test/applicationcontext.xml");
       
-      ApplicationContext ctx = new FileSystemXmlApplicationContext( "classpath:applicationcontext.xml");
+      ApplicationContext ctx = new FileSystemXmlApplicationContext("classpath:applicationcontext.xml");
       ```
 
       
@@ -1566,6 +1665,7 @@
 15. Spring 事务传播
 
         Spring 允许通过声明方式, 在 IOC 配置中指定事务的边界和事务属性, Spring 自动在指定的事务边界上应用事务属性.
+<<<<<<< HEAD
 
         - TransactionDefinition: 描述事务的隔离级别, 超时时间, 是否为只读事务和事务传播规则等控制事务具体行为的事务属性.
 
@@ -1579,6 +1679,21 @@
 
         - Spring 事务传播行为
 
+=======
+    
+        - TransactionDefinition: 描述事务的隔离级别, 超时时间, 是否为只读事务和事务传播规则等控制事务具体行为的事务属性.
+    
+        - PlatformTransactionManager 根据 TransactionDefinition 提供的事务属性配置信息创建事务, 并用 TransactionStatus 描述激活事务的状态.
+    
+        - Spring JDBC 和 MyBatis 事务管理器
+    
+          DataSourceTransactionManager 内部使用 DataSource 的 `Connection#commit()`, `Connection#rollback()` 进行事务的管理
+    
+        - DataSourceUtils#getConnection(DataSource dataSource) 方法可以从指定的数据源中获取与当前线程绑定的 Connection.
+    
+        - Spring 事务传播行为
+    
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
           | 事务传播行为类型          | 说明                                                         |
           | ------------------------- | ------------------------------------------------------------ |
           | PROPAGATION_REQUIRED      | 如果当前没有事务, 则新建一个事务; 如果已经存在一个事务, 则加入到这个事务中 |
@@ -1602,6 +1717,11 @@
              }
              
              public void addForum(final Forum forum) {
+<<<<<<< HEAD
+=======
+                 // 底层通过调用 TransactionManager 的事务提交，然后再调用 DataSource 获取 Connection，
+                 // 调用 Connnection 的事务控制方法实现
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
                  template.execute(new TransanctionCallbackWithoutResult() {
                      protected void doInTransactionWithoutResult(TransactionStatus status) {
                          forumDao.addForum(forum);
@@ -1620,7 +1740,11 @@
          </bean>
          
          <!--需要实施事务增强的目标业务 Bean-->
+<<<<<<< HEAD
          <bean id="forumTarget" class="com.smart.service.forum"
+=======
+         <bean id="forumTarget" class="package com.smart.service.forum"
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
                p:forumDao-ref="forumDao"
                p:topicDao-ref="topicDao"
                p:postDao-ref="postDao"/>
@@ -1682,16 +1806,23 @@
 
       Spring IOC 是一个独立的模块, 它并不是直接在 Web 容器中发挥作用的, 如果要在 Web 环境中使用 IOC 容器, 需要 Spring 为 IOC 设计一个启动过程, 把 IOC 容器导入, 并在 Web 容器中建立起来. 在这个过程中, 一方面处理 Web 容器的启动, 另一方面通过设计特定 Web 容器拦截器, 将 IOC 容器载入到 Web 环境中, 并将其初始化. 在这个过程建立完成以后, IOC 容器才能正常工作, 而 SpringMVC 是建立在 IOC 容器基础上的.
 
+<<<<<<< HEAD
       
 
       - Spring IOC 上下文: 加载应用中的其它 Bean
 
           在 ContextListener(实现 ServletContextListener) 中初始化. ContextListener 通过监听 Web 容器的生命周期变化去初始化 Spring IOC 上下文. 这个上下文存放在 ServletContext 这个上下文中.
+=======
+     - Spring IOC 上下文: 加载应用中的其它 Bean
+
+         在 ContextLoaderListener(实现 ServletContextListener) 中初始化. ContextListener 通过监听 Web 容器的生命周期变化去初始化 Spring IOC 上下文. 这个上下文存放在 ServletContext 这个上下文中.
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
       - 映射请求上下文: 加载包含 Web 组件的 Bean, 例如控制器, 视图解析器以及处理器映射
 
 19. SpringMVC 配置:
 
+<<<<<<< HEAD
       - 配置 DispatcherServlet(SpringMVC 的前端控制器), 容器会在类路径查找 ServletContainerInitializer 接口的实现类来配置 DispatcherServlet, Spring 提供了 SpringServletContainerInitializer 作为实现类, 该类又会去查找实现 WebApplicationInitializer 的实现类, Spring 提供了AbstractAnnotationConfigDispatcherServletInitilizer 实现(可以通过实现该类来配置 Servlet).
 
           DispatcherServlet 的配置声明在 WebConfig 中, 而根配置定义在 RootConfig 中.
@@ -1728,9 +1859,62 @@
      * `InternalResourceView#render()`方法
 
      * `Application#forward()`方法
+=======
+      - 配置 DispatcherServlet(SpringMVC 的前端控制器), 容器会在类路径查找 ServletContainerInitializer 接口的实现类来配置 DispatcherServlet, Spring 提供了 SpringServletContainerInitializer 作为实现类, 该类又会去查找实现 WebApplicationInitializer 的实现类, Spring 提供了AbstractAnnotationConfigDispatcherServletInitilizer 实现(可以通过实现该类来配置 Servlet). 实际上该类会同时创建 DispatcherServlet 和 ContextLoaderListener.
+
+          DispatcherServlet 的配置声明在 WebConfig 中, 而根配置定义在 RootConfig 中.
+
+          ```java
+          // DispatcherServlet 配置
+          public class SpittrWebApplicationInitializer extends AbstractAnnotationConfigDispatcherServletInitilizer {
+              @Override
+              protected String[] getServletMappings() {
+                  return new String[] {"/"};
+              }
+              
+              // 话说这个不是先初始化么，怎么还是配置在这里
+              @Override
+              protected Class<?>[] getRootConfigClasses() {
+                  return new Class<?>[] {RootConfig.class};
+              }
+              
+              @Override
+              protected Class<?>[] getServletConfigClasses() {
+                  return new Class<?>[] {WebConfig.class};
+              }
+          }
+          
+          
+          // DispatcherServlet 上下文配置
+          @Configuration
+          @EnableWebMvc
+          @ComponentScan("spitter.web") // 这个配置的是 @Controller 注解修饰的控制器的位置
+          public class WebConfig extends WebMvcConfigurerAdapter {
+              @Bean
+              public ViewResolver viewResolver() {
+                  InternalViewResolver resolver = new InternalViewResolver();
+                  resolver.setPrefix("/WEB-INF/views");
+                  resolver.setSuffix(".jsp");
+                  return resolver;
+              }
+              
+              @Override
+              public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configure) {
+                  configurer.enable();
+              }
+          }
+          // Spring 应用上下文配置
+          @Configuration
+          @ComponentScan(basePackages={"spitter"}, excludeFilters={@Filter(type=FilterType.ANNOTATION, value=EnableWebMvc.class)}) 
+          public class RootConfig {
+              
+          }
+          ```
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
      * `ApplicationFilterChain#doFilter()`方法
 
+<<<<<<< HEAD
      * `JspServlet.service()`方法
 
      * `JspCompilationContext.compile()`方法
@@ -1756,6 +1940,36 @@
       - ViewNameMethodReturnValueHandler: 处理直接返回String类型
       - MapMethodProcessor: 处理返回Map类型
       - ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+=======
+    * `InternalResourceView#render()`方法
+    * `Application#forward()`方法
+    * `ApplicationFilterChain#doFilter()`方法
+    * `JspServlet.service()`方法
+    * `JspCompilationContext.compile()`方法
+    * `eclipse.Compiler.compile()`方法
+    
+    然后根据编译产生的Servlet生成Servlet实例对象, 然后让该实例对象的service()方法输出页面流.
+    
+21. Spring Controller 方法的处理: Spring 内部通过调用一系列 Handler 方法来处理:
+
+     - ModelAndViewMethodReturnValueHandler: 处理返回值为 ModelAndView
+
+     - ModelMethodProcessor: 处理返回值为 Model
+
+	- ViewMethodReturnValueHandler: 处理返回值为 View
+	- ResponseBodyEmitterReturnValueHandler: 处理返回值为 ResponseEntity
+	- StreamingResponseBodyReturnValueHandler: 
+	- HttpEntityMethodProcessor
+	- HttpHeadersReturnValueHandler
+	- CallableMethodReturnValueHandler
+	- DeferredResultMethodReturnValueHandler
+	- AsyncTaskMethodReturnValueHandler
+	- ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+	- RequestResponseBodyMethodProcessor: 处理方法被@ResponseBody 注解修饰
+	- ViewNameMethodReturnValueHandler: 处理直接返回String类型
+	- MapMethodProcessor: 处理返回Map类型
+	- ModelAttributeMethodProcessor: 处理方法被@ModelAttribute注解修饰
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
 22. 参考
 
@@ -1796,6 +2010,7 @@
    - web.xml 配置
 
      ```xml
+     <!--可以通过 @WebFilter 注解配置 Filter-->
      <filter>
      	<filter-name>springSecurityFilterChain</filter-name>
          <filter-class>
@@ -1803,17 +2018,18 @@
          </filter-class>
      </filter>
      ```
-
-   - Java 方式
-
+  ```
+   
+- Java 方式
+   
      ```java
      // Spring 会发现它, 并向 Web 容器注册 DelegatingFilterProxy
      public class SecurityWebInitializer extends AbstractSecurityWebApplicationInitializer {
          
      }
-     ```
+  ```
 
-     
+  
 
      ```java
      @Configuration
@@ -1837,8 +2053,8 @@
                  .withUser("user").password("password").roles("USER");
          }
      }
-     ```
-
+  ```
+   
      
 
 ------
@@ -1893,7 +2109,7 @@
    - Eureka: 服务治理: 围绕服务注册与服务发现机制来完成对微服务应用实例的自动化管理.
 
      - 服务提供者: 
-       - 服务注册: 在启动时将自己注册到服务注册中心, 通过 `@DiscoveryClient` 注解开启.
+       - 服务注册: 在启动时将自己注册到服务注册中心, 通过 `@EnableDiscoveryClient` 注解开启.
        - 服务续约: 注册服务完成后会维持一个心跳来告诉服务注册中心自己还活着
      - 服务消费者:
        - 服务注册: 服务消费者也需要将自己注册到服务
@@ -1920,7 +2136,7 @@
 
      - 不使用网关管理, 运维需要在 Nginx 中手动配置各个服务与路由的映射关系, 也就是说运维需要知道有多少个对外提供的服务,  然后进行配置.
      - 网关类似于门面设计模式, 相当于整个微服务架构的门面. 有了网关之后, 运维只需要在 Nginx 中将请求转发到对应的服务网关上就好了. 而且通过网关还能对外隐藏服务的细节, 提高了安全性.
-     - 通过`@EnableZuulProxy`注解开启网关服务,  通过 提供`ZuulFilter`进行过滤, 过滤器的阶段: Pre, Routing, Post, Error 
+     - 通过`@EnableZuulProxy`注解开启网关服务,  通过 提供 `ZuulFilter` 进行过滤, 过滤器的阶段: Pre, Routing, Post, Error 
      - 独立出授权认证服务, 在 API 网关中的过滤器对请求进行授权和认证.
 
    - Config: 配置中心
@@ -1978,21 +2194,22 @@
          insert into test (content) values ('aaa'),('bbb'),('ccc');
          insert into test (content) values ('aaaa'),('bbbb'),('cccc');
          select * from test where match(content) against('aaaa');
-         ```
+  ```
 
        - 支持表锁
-
+    
          读取数据时获取表级的共享锁; 写数据时获取表级的排它锁.
-
+    
        - 延迟键写
-
+    
          更改的索引数据不会立即写入磁盘, 而是缓存在内存中
-
+    
        - 表的压缩
-
+    
          能够将表进行压缩以占用较少的空间, 支持索引, 但是数据为只读的
 
-       
+
+​       
 
    ![](./asserts/mysql-architecture.png)
 
@@ -2008,15 +2225,31 @@
 3. 事务实现原理:
 
    - 日志: 二进制日志(服务层), 回滚日志(存储引擎层), 重做日志(存储引擎层)
-   - 原子性: 回滚日志
-   - 一致性: 重做日志
+
+   - 原子性: 回滚日志(原子性主要解决程序执行出错导致的数据问题)
+
+       据库丢弃或撤消该事务中迄今为止所做的任何写入，这样就可以保证没有任何东西在这个过程中被改变，所以可以**安全地重试**。**中止出错的事务，并撤销该事务进行的所有变更。**
+
+   - 一致性: 重做日志(一致性主要解决的应该是因为物理因素导致的数据问题例如突然停电导致的数据没能完全持久化)
+
+       如果做一个财务系统，账户A转钱到账户B，那么账户A中减少的钱与账户B中增加的钱必须相等。**这并不是数据库可以保证的事情，**而是应用程序来保证的。
+
+       **原子性，隔离性、持久性都是数据库的属性，而一致性是应用程序的属性。**应用程序可以用原子性和隔离性来实现一致性。
+
+   - 隔离性:
+
+       **同时执行的事务不能相互冒犯**。这意味着，每个事务都可以认为它是唯一在整个数据库上运行的事务。数据库确保多个事务提交后，结果与它们按顺序一个接一个地运行是一样的，尽管实际上它们可能是并发执行的。
+
+   - 持久性:
+
+       持久性保证一旦事务的操作生效，不会因为任何原因其修改被撤销或丢失。
 
 4. 隔离的四个级别：
 
    - 脏读(Read Uncommitted):
-   - 读提交(Read Committed): 解决脏读
-   - 重复读(Repeatable Read): 解决重复读
-   - 序列化(Serializable): 解决幻读
+   - 读提交(Read Committed): 解决脏读(这时加入写锁，保证了写操作的原子性)
+   - 重复读(Repeatable Read): 解决重复读(多次读取同一条数据出现不一致的情况，这时读操作需要加锁，只有读锁释放的时候才能获取写锁)
+   - 序列化(Serializable): 解决幻读(此时需要对整个表加锁来使两个操作呈有序的操作，保证操作的先后顺序)。
 
 5. 触发器使用
 
@@ -2156,14 +2389,14 @@
 
      - 查询优化
 
-       - 定位慢查询. 
+       - 定位慢查询。使用慢查询日志分析。
 
 11. 索引:
 
     - 类型:
       - 按数据结构实现: Hash 索引, B+ 树索引, 全文索引
       - 按是否是主键索引: 聚集索引(Clustered Index), 二级索引(Secondery Index, 二级的原因是该索引会保留对应行的主键, 然后根据主键再去聚集索引中找到指向实际数据的指针, 因此称为二级索引)
-      - 按查询数据: 覆盖索引(Covering Index, 覆盖的意思是覆盖了插叙所需要的数据, 因此不需要从磁盘中去读取行的数据了)
+      - 按查询数据: 覆盖索引(Covering Index, 覆盖的意思是覆盖了查询所需要的数据, 因此不需要从磁盘中去读取行的数据了)
       - 按建立索引的列: 单列索引, 多列索引
 
     - 索引匹配: 最左匹配原则
@@ -2181,7 +2414,7 @@
 
     - 执行计划分析:(参见 MySQL 手册第 8.8.2)
 
-      - select_type:
+      - select_type: 表明执行顺序
 
         ```sql
         EXPLAIN 
@@ -2193,7 +2426,7 @@
         -- 第三个 SELECT 的 select_type 为 UNION RESULT, 代表它是 从 UNION RESULT 从获取数据的
         ```
 
-        ![](./asserts/select-type.PNG)
+        ![](asserts/select-type1.PNG)
 
         ```sql
         -- 这里第一个 SELECT 的 select_type 为 PRIMARY, 代表最外层的 SELECT
@@ -2212,7 +2445,7 @@
         EXPLAIN SELECT * FROM person WHERE id = 1
         ```
 
-        ![](F:\studynotes\documents\interview\asserts\type.PNG)
+        ![](asserts/type.PNG)
 
         ```sql
         -- 这里第一个 type 为 ALL, 表示扫描第一个表的所有数据
@@ -2237,9 +2470,9 @@
         ![](./asserts/type4.png)
 
         ```sql
-        -- 这里 type 为 index, 根据索引顺序去读取所有的行数据
+        -- 这里 type 为 index, Extra 为空，表示根据索引顺序去读取所有的行数据
         EXPLAIN SELECT * FROM actor ORDER BY id
-        -- 这里 type 为 index, 表示相当于直接从索引中读到行数据
+        -- 这里 type 为 index, Extra 为 Using Index，表示相当于直接从索引中读到行数据
         EXPLAIN SELECT age FROM actor WHERE age > 10 AND age < 100
         ```
 
@@ -2479,7 +2712,17 @@
 
    [22] : [Centos7下yum安装和使用Percona-toolkit工具](<https://aqzt.com/5366.html>)
 
+<<<<<<< HEAD
    [23] : [高性能MySQL](<https://book.douban.com/subject/23008813/>)
+=======
+   [23] : [通俗易懂 事务、ACID、脏读、脏写、幻读、读已提交、快照隔离、读写锁、两阶段锁定 的区别与联系](https://zhuanlan.zhihu.com/p/69380112)
+
+   [24] : [一文带你理解脏读,幻读,不可重复读与mysql的锁,事务隔离机制](https://www.zhihu.com/people/blue-69-47)
+
+   [25] : [面试问烂的 MySQL 四种隔离级别，看完吊打面试官！](https://zhuanlan.zhihu.com/p/76743929)
+
+   [26] : [MySQL事务事务相关教程](https://zhuanlan.zhihu.com/p/41114360)
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
 
 ------
 
@@ -2670,19 +2913,65 @@
 
 3. RabbitMQ 重要组件:
    - ConnectionFactory(连接管理器): 应用程序与 Rabbit 之间建立的管理器.
+   
+   - Connection(连接): 代表和服务器的一个连接。
+   
    - Channel(信道): 消息推送使用的通道.
-   - Exchange(交换器): 用于接受, 分配消息.
+   
+- Exchange(交换器): 用于接受, 分配消息.
+  
    - Queue(队列): 用于存储生产者的消息.
+   
    - RoutingKey(路由键): 用于把生产者的数据分配到交换器上.
+   
    - BindingKey(绑定键): 用于把交换器的消息绑定到队列上.
-
+   
+       ```java
+       ConnectionFactory factory = new ConnectionFactory();
+       factory.setUsername(USERNAME);
+       factory.setPassword(PASSWORD);
+       factory.setVirtualHost(virtualHost);
+       factory.setHost(IP_ADDRESS);
+       factory.setPort(PORT);
+       // Connection
+       Connection conn = factory.newConnection();
+       // Channel
+       Channel channel = conn.createChannel();
+       // Exchange
+       channel.exchangeDeclare(exchangeName, "direct", true);
+       // Queue
+       String queueName = channel.queueDeclare().getQueue();
+       // Binding
+       channel.queueBind(queueName, exchangeName, routingKey);
+       // 发送消息
+       channel.basicPublish(exchangeName, routingKey, null, messageBytes);
+       // 拉模式消费消息
+       GetResponse response = channel.basicGet(QUEUE_NAME, false);
+       System.out.println(new String(response.getBody()));
+       channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
+       // 推模式
+       boolean autoAck = false;
+       channel.basicQos(64);
+       channel.basicConsume(queueName, autoAck, "myConsumerTag",
+           new DefaultConsumer(channel) {
+              @Override
+               public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                   String routingKey = envelope.getRoutingKey();
+                   String contentType = properties.getContentType();
+                   long deliveryTag = envelope.getDeliveryTag();
+                   channel.basicAck(deliveryTag, false);
+               }
+           });
+       ```
+   
+       
+   
 4. 队列
 
    当消息在一个队列中变成死信之后, 它能被重新发送到另一个交换器中, 这个交换器就是 DLX, 绑定 DLX 的队列就称为死信队列.
 
    - 延迟队列实现: 消费者订阅死信队列, 当消息在正常队列中过期之后被存放到这个死信队列中, 消费者消费到这个消息, 以实现延迟接收消息的目的.
-   - 
-
+   
 5. 交换器类型:
    - fanout: 它会把所有发送到该交换器的消息路由到所有与该交换器绑定的队列中
    - direct: 它把消息路由到那些 BindKey 和 RoutingKey 完全匹配的队列中
@@ -2709,9 +2998,8 @@
 
      - 可见视图变化:
 
-       
-
-     ```java
+     
+```java
      public interface IBook {
          String getName();
          int getPrice();
@@ -2755,23 +3043,23 @@
              }
          }
      }
-     ```
+```
 
-     现在需要进行打折销售, 解决方法:
-
-     - 修改接口
-
-       在 `IBook` 上增加一个 `getOffPrice()`, 这样实现类 `NovelBook` 要进行修改, `BookStore` 也需要进行修改. `IBook` 作为接口应该是稳定可靠的, 不应该经常性的变动.
-
-     - 修改实现类
-
-       修改 `NovelBook` 类中的方法, 直接在 `getPrice()` 方法中实现, 然后通过替换 class 文件进行功能的改进. 
-
-     - 通过扩展实现变化
-
-       增加一个子类 `OffNovelBook` 覆写 `getPrince()` 方法, 高层次模块通过 `OffNovelBook` 类产生新的对象.
-
-       ```java
+现在需要进行打折销售, 解决方法:
+     
+- 修改接口
+  
+  在 `IBook` 上增加一个 `getOffPrice()`, 这样实现类 `NovelBook` 要进行修改, `BookStore` 也需要进行修改. `IBook` 作为接口应该是稳定可靠的, 不应该经常性的变动.
+  
+- 修改实现类
+  
+  修改 `NovelBook` 类中的方法, 直接在 `getPrice()` 方法中实现, 然后通过替换 class 文件进行功能的改进. 
+  
+- 通过扩展实现变化
+  
+  增加一个子类 `OffNovelBook` 覆写 `getPrince()` 方法, 高层次模块通过 `OffNovelBook` 类产生新的对象.
+  
+  ```java
        public class OffNovelBook extends NovelBook {
            public OffNovelBook(String name, int price, String author) {
                super(name, price, author);
@@ -2803,34 +3091,34 @@
                }
            }
        }
-       ```
-
-       
-
-   - 单一职责原则(Single Responsibility Principle): There should never be more than one reason for a class to change (有且仅有一个原因引起类的变化).
-
-   - 里氏替换原则: Functions that use pointers or references to base  classes must be able to use objects of derived classes without knowing it(所有引用基类的地方必须能够透明地使用其子类的对象).
-
-     - 子类必须完全实现父类的方法
+  ```
+  
+  
+  
+- 单一职责原则(Single Responsibility Principle): There should never be more than one reason for a class to change (有且仅有一个原因引起类的变化).
+  
+- 里氏替换原则: Functions that use pointers or references to base  classes must be able to use objects of derived classes without knowing it(所有引用基类的地方必须能够透明地使用其子类的对象).
+  
+  - 子类必须完全实现父类的方法
      - 子类可以有自己的个性
-     - 覆盖或实现父类的方法时输入参数可以被放大
+     - 覆盖或实现父类的方法时输入参数可以被放大(放大意味着总是先匹配父类的方法)
      - 覆盖或实现父类的方法时输出结果可以被缩小
-
-   - 依赖倒置原则(Dependence Inversion Principle): High level modules should not depend upon low level modules. Both should depend upon abstractions. Abstractions should not depend upon details. Details should not depend upon abstractions.
-
-     - 模块之间的依赖是通过抽象发生, 实现类之间不发生直接的依赖关系, 其依赖关系是通过接口或抽象类产生的.
+  
+- 依赖倒置原则(Dependence Inversion Principle): High level modules should not depend upon low level modules. Both should depend upon abstractions. Abstractions should not depend upon details. Details should not depend upon abstractions.
+  
+  - 模块之间的依赖是通过抽象发生, 实现类之间不发生直接的依赖关系, 其依赖关系是通过接口或抽象类产生的.
      - 接口或抽象类不依赖于实现类.
      - 实现类依赖接口或抽象类.
-
-   - 接口隔离原则: Clients should not be foreced to depend upon interfaces that they don't use(客户端不应该依赖它不需要的接口); The dependency of one class to another one should depend on the smallest possible interface(类间的依赖关系应该建立在最小的接口上).
-
-     提供给每个模块的都应该是单一的接口, 而不是建立一个庞大的臃肿的接口, 容纳客户端的访问. 将一个臃肿的接口变更为两个独立的接口就是接口隔离原则.
-
-   - 迪米特法则(最少知识原则):  Only talk to your immediate friends(只与最直接的朋友通信).
-
-     朋友类的定义: 出现在成员变量, 方法的输入输出参数中的类称为成员朋友类, 而出现在方法内部的类不属于朋友类.
-
-     ```java
+  
+- 接口隔离原则: Clients should not be foreced to depend upon interfaces that they don't use(客户端不应该依赖它不需要的接口); The dependency of one class to another one should depend on the smallest possible interface(类间的依赖关系应该建立在最小的接口上).
+  
+  提供给每个模块的都应该是单一的接口, 而不是建立一个庞大的臃肿的接口, 容纳客户端的访问. 将一个臃肿的接口变更为两个独立的接口就是接口隔离原则.
+  
+- 迪米特法则(最少知识原则):  Only talk to your immediate friends(只与最直接的朋友通信).
+  
+  朋友类的定义: 出现在**成员变量, 方法的输入输出参数**中的类称为成员朋友类, 而出现在方法内部的类不属于朋友类.
+  
+  ```java
      public class Teacher {
          // 既然老师已经将点名的事情交给 GroupLeader 去做了, 那么老师就不需要知道 Girl 了
          public void command(GroupLeader groupLeader) {
@@ -2884,7 +3172,7 @@
              teacher.command(new GroupLeader());
          }
      }
-     ```
+  ```
 
 ------
 
@@ -2929,12 +3217,12 @@
      <!--foreach 实现批量插入-->
      INSERT INTO user
      	 VALUES
-     <foreach collection="list" item="user" separator=",">
-     	(
-         	#{user.id},
-         	#{user.name}
-         )
-     </foreach>
+                 <foreach collection="list" item="user" separator=",">
+                     (
+                         #{user.id},
+                         #{user.name}
+                     )
+                 </foreach>
      ```
 
    - bind
@@ -2962,15 +3250,68 @@
 
    - MyBatis 支持 association 关联对象和 collection 关联集合对象的延迟加载. 在配置文件 `lazyLoadingEnabled` 和 XML 中的 `fetchType` 配置项配置.  实现原理是使用 `CGLIB` 创建目标对象的代理对象, 当调用目标方法时, 进入拦截器方法, 发现目标为空时, 则调用相关查询语句给目标赋值, 然后再返回.
 
-9. 插件运行原理
+9. MyBatis 缓存配置
 
-   - 实现 Interceptor, 并采用 @Signature 注解标注要拦截的方法签名. 在初始化组件时例如 Executor, 为该对象生成动态代理对象(这个时候会验证插件的注解的标注与该对象的方法是否一致), 多个动态代理对象生成一个插件链的结构. 
+    - 一级缓存
 
-10. 参考
+        默认开启。MyBatis 的一级缓存存在于 SqlSession 生命周期中。如果同一个 SqlSession 中执行的方法和参数完全一致，那么从缓存中可以直接返回对象。可以通过 `flushCache="true"` 强制从数据库中查询数据。
+
+    - 二级缓存
+
+        二级缓存存在于 `SqlSessionFactory` 生命周期中。调用 `SqlSession#close()` 方法后才将数据缓存到二级缓存中。
+
+        ```xml
+        <!--mybatis-config.xml 中配置-->
+        <settins>
+            <!--默认开启-->
+            <setting name="cacheEnabled" value="true"/>
+        </settins>
+        <!--mapper.xml 中配置-->
+        <mapper namespace="com.study.RoleMapper">
+        	<cache
+               eviction="FIFO"
+               flushInterval="60000"
+               size="512"
+               readOnly="true"/>
+        </mapper>
+        ```
+
+10. 插件运行原理
+
+   - 实现 Interceptor, 并采用 @Signature 注解标注要拦截的方法签名. 在初始化组件时例如 Executor, 为该对象生成动态代理对象(这个时候会验证插件的注解的标注与该对象的方法是否一致), 多个动态代理对象生成一个插件链的结构。
+
+11. Spring 集成 MyBatis
+
+    ```xml
+    <!--SqlSession 被隐藏了，如何调用相关方法，通过 Mapper 接口代理类如何关闭 SqlSession-->
+    <!--本质上是将 Mapper 接口方法映射到 SqlSessionTemplate 上执行的，利用 MapperFactoryBean-->
+    <!--在 applicationContext.xml 中配置-->
+    <!--用于创建 SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="mapperLocations">
+        	<array>
+            	<value>classpath:com/study/mybatis/**/mapper/*.xml</value>
+            </array>
+        </property>
+    <!--通过该类自动扫描所有 Mapper 接口，使用时可以直接注入接口-->  
+    <!--它调用 ClassMapperScanner 去扫描接口，ClassMapperScanner 又使用 MapperFactoryBean-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    	<property name="basePackage" value="study.mybatis.**.mapper"
+    </bean>
+    ```
+
+12. 参考
 
     [1] : [Mybatis常见面试题](https://segmentfault.com/a/1190000013678579)
 
     [2] : [复习Mybatis框架，面试题](<https://zhuanlan.zhihu.com/p/60257737>)
+<<<<<<< HEAD
 
     [3] : [MyBatis从入门到精通](<https://book.douban.com/subject/27074809/>)
 
+=======
+    
+    [3] : [代码优化实例-Java用JDBC批处理插入](https://zhaopeng.me/index.php/archives/代码优化实例-java用jdbc批处理插入.html)
+>>>>>>> d3a44f80aa9e034c8e296edd6ca98d663d963403
