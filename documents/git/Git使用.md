@@ -110,6 +110,8 @@
     ```shell
     # 创建分支
     git branch <branchName>
+    # 在指定分之上创建分支
+    git branch <branchName> <startBranchName>
     # 切换分支
     git checkout <branchName>
     # 查看分支，带星号的即为当前分支
@@ -129,6 +131,10 @@
     git log --graph
     # 合并时保留分支信息
     git merge --no-ff -m <description> <branchName>
+    # 删除远程分支
+    git push origin --delete <branchName>
+    # 查看分支从哪个分支创建
+    git reflog --date=local --all | grep branch
     ```
 
 - ###### Bug 分支
@@ -186,3 +192,9 @@
 [5] : [Git fetch和git pull的区别](https://blog.csdn.net/hudashi/article/details/7664457)
 
 [6] : [Git教程](https://www.yiibai.com/git)
+
+[7] : [Git 工作流程](<http://www.ruanyifeng.com/blog/2015/12/git-workflow.html>)
+
+[8] : [图文详解如何利用Git+Github进行团队协作开发](<https://zhuanlan.zhihu.com/p/23478654>)
+
+[9] : [Free-Git-Books](https://github.com/anzhihe/Free-Git-Books)
