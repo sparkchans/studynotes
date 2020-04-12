@@ -77,12 +77,14 @@
  * list-style-type: square|circle|disc;
  */
 #nice ul {
+	list-style-type:square;
 }
 
 /* 有序列表整体样式
  * list-style-type: upper-roman|lower-greek|lower-alpha;
  */
 #nice ol {
+	list-style-type:lower-alpha;
 }
 
 /* 列表内容，不要设置li
@@ -125,6 +127,7 @@
 #nice a {
   color: rgb(50,50,50);
   border-bottom: 2px solid rgb(50,50,50);
+  font-weight: normal;
 }
 
 /* 加粗 */
@@ -168,7 +171,7 @@
 
 /* 行内代码 */
 #nice p code, li code {
-  color: rgb(71, 193, 168);
+  color: rgb(71, 193, 168)!important;
 }
 
 /* 非微信代码块
