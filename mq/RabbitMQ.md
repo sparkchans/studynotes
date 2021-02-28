@@ -1,0 +1,1 @@
+[1] : [安装rabbitmq-server 后启动错误]([https://p1htmlkernalweb.mybluemix.net/articles/%E5%AE%89%E8%A3%85rabbitmqserver+%E5%90%8E%E5%90%AF%E5%8A%A8%E9%94%99%E8%AF%AF_3844027_csdn.html](https://p1htmlkernalweb.mybluemix.net/articles/安装rabbitmqserver+后启动错误_3844027_csdn.html))

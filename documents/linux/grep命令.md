@@ -31,4 +31,45 @@
   grep -m 3 hello test.txt
   ```
 
-  
+- ####  输出前后匹配的行
+
+    ```shell
+    grep -B 10 -A 10 "test" /var/test.log
+    ```
+
+- #### 正则表达式时查询
+
+    ```shell
+    grep "test*" /var/test.log
+    ```
+
+- #### 固定字符串查询
+
+    ```shell
+    # 这里不会将*当作通配符
+    grep -F "test*" /var/test.log
+    ```
+
+- #### 匹配最多行数后不再输出
+
+    ```shell
+    grep -m 10 "test*" /var/test.log
+    ```
+
+- #### 输出匹配的行号和文件名
+
+    ```shell
+    grep -n -H "test*" /var/test.log
+    ```
+
+- #### 输出匹配的文件名
+
+    ```shell
+    # 输出匹配的文件名
+    grep -l "test*" /var/test.log
+    
+    # 输出非匹配的文件名
+    grep -L "test*" /var/test.log
+    ```
+
+    
